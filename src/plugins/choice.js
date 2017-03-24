@@ -353,7 +353,7 @@
     'choice',
     { filterable: true, optional: true },
     {
-     choice : 'value'  // alternative is 'display'
+     choice : 'value'  // alternative is 'display'. FIXME : this parameter seems unused, remove
     },
     _Editor
   );
