@@ -76,7 +76,7 @@
       update : function ( restoreFlag ) {
         var val = this.editor.text(), // 'val' is the index of the selected field in the master select drop-down
             href = this.spec.attr('data-ajax-url');
-        if (val == "") {
+        if (val === "") {
           this.load(false);
         } else if (this.cache[val]) {
           this.load(restoreFlag, this.cache[val]);
@@ -107,7 +107,7 @@
         var set = this.wrapper();
         // eq : celui de jQuery
         // fonction get(0) ici : dans axel/src/core/wrapper.js, l. 355
-        $axel(set.eq(ev.position)).get(0).ajax({ 'items' : this.last, restore : ev.position === 0 ? true : false  });
+        $axel(set.eq(ev.position)).get(0).ajax({ 'items' : this.last, restore : ev.position === 0  });
       }
     }
   };
