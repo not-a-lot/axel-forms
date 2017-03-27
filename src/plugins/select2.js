@@ -87,17 +87,8 @@
        * static view of the plugin instance, also called "handle"
        */
       onGenerate: function (aContainer, aXTUse, aDocument) {
-        let viewNode;
-        if (this.getParam("select2_tags") === 'yes') { // do not take appearance into account
-          viewNode = xtdom.createElement(aDocument, 'input');
-        } else {
-          if (this.getParam('appearance') === 'full') {
-            viewNode = xtdom.createElement(aDocument, 'ul');
-          } else {
-            viewNode = xtdom.createElement(aDocument, 'select');
-          }
-          xtdom.addClassName(viewNode, 'axel-choice');
-        }
+        const viewNode = xtdom.createElement(aDocument, 'select');
+        xtdom.addClassName(viewNode, 'axel-choice');
         aContainer.appendChild(viewNode);
         // trick to prevent cloning 'select2' shadow list when instantiated inside a repetition
         // the guard is needed to persist xttOpenLabel if planted on plugin
@@ -106,8 +97,9 @@
       },
 
       onInit: function (aDefaultData, anOptionAttr, aRepeater) {
-        let values = this.getParam('values');
+        const values = this.getParam('values');
         if (this.getParam('hasClass')) {
+          // undocumented param, probably for additional styling
           xtdom.addClassName(this._handle, this.getParam('hasClass'));
         }
         if (this.getParam('multiple') === 'yes') {
@@ -115,79 +107,87 @@
         }
         // builds options if not cloned from a repeater
         if (!aRepeater) {
-          /* instead of manually building the select and options elements, we
-           * use an array that we use that as the 'data' parameter for select2
+          /* instead of manually building the <option> elements, we
+           * make an array that we use as the 'data' parameter for select2
            */
-          let data = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
+          const optionData = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
+          const select2Params = {};
+          select2Params.data = optionData;
+          select2Params.dropdownParent = $(this.getDocument().body); /* important in the case where
+           the template is inside an iframe. */
+          $(this._handle).select2(select2Params);
         }
       },
 
       // Awakes the editor to DOM's events, registering the callbacks for them
       onAwake: function () {
-        let _this = this,
-          defVal = this.getDefaultData(),
-          pl = this.getParam("placeholder"),
-          complementClass = this.getParam("complement"),
-          tag = complementClass ? ' - <span class="' + complementClass + '">' : undefined,
-          formRes = complementClass ? function (s, c, q, e) {
-            return formatResult(s, c, q, e, tag);
-          } : formatResult,
-          params = {
-            myDoc: this.getDocument(),
-            formatResult: formRes,
-            formatSelection: formatSelection,
-            matcher: accentProofMatcher,
-            formatInputTooShort: formatInputTooShort
-          }, k, curVal, typVal;
-        for (k in decodeTypes) { // FIXME: typing system to be integrated with AXEL
-          curVal = this.getParam('select2_' + k);
-          if (curVal) {
-            if (decodeTypes[k] === 'bool') {
-              typVal = curVal;
-            } else if (decodeTypes[k] === 'int') {
-              typVal = parseInt(curVal, 10);
-            } else {
-              typVal = curVal;
-            }
-            params[k] = typVal;
-          }
-        }
-        if (this.getParam("select2_tags") === 'yes') { // not compatible with placeholder
-          params.multiple = false;
-          params.tags = this.getParam('i18n');
-          delete params.minimumResultsForSearch;
-        } else {
-          if (pl || (!defVal)) {
-            pl = pl || "";
-            // inserts placeholder option
-            if (this.getParam('multiple') !== 'yes') {
-              $(this._handle).prepend('<option></option>');
-            }
-            // creates default selection
-            if (!defVal) {
-              this._param.values.splice(0, 0, pl);
-              if (this._param.i18n !== this._param.values) { // FIXME: check its correct
-                this._param.i18n.splice(0, 0, pl);
-              }
-            }
-            params.allowClear = true;
-            params.placeholder = pl;
-          }
-          if (this.getParam('multiple') !== 'yes') {
-            if (this.getParam('typeahead') !== 'yes') {
-              params.minimumResultsForSearch = -1; // no search box
-            }
-          }
-        }
-        this._setData(defVal);
-        $(this._handle).select2(params).change(
-          function (ev, data) {
-            if (!(data && data.synthetic)) { // short circuit if forged event (onLoad)
-              _this.update($(this).val()); // tells 'choice' instance to update its model
-            }
-          }
-        );
-        $(this._handle).prev('.select2-container').get(0).xttNoShallowClone = true; // prevent cloning
+        // window.setTimeout(function() {
+        //   $('select.axel-choice').select2(select2Params);
+        // }, 5000);
+        // let _this = this,
+        //   defVal = this.getDefaultData(),
+        //   pl = this.getParam("placeholder"),
+        //   complementClass = this.getParam("complement"),
+        //   tag = complementClass ? ' - <span class="' + complementClass + '">' : undefined,
+        //   formRes = complementClass ? function (s, c, q, e) {
+        //     return formatResult(s, c, q, e, tag);
+        //   } : formatResult,
+        //   params = {
+        //     myDoc: this.getDocument(),
+        //     formatResult: formRes,
+        //     formatSelection: formatSelection,
+        //     matcher: accentProofMatcher,
+        //     formatInputTooShort: formatInputTooShort
+        //   }, k, curVal, typVal;
+        // for (k in decodeTypes) { // FIXME: typing system to be integrated with AXEL
+        //   curVal = this.getParam('select2_' + k);
+        //   if (curVal) {
+        //     if (decodeTypes[k] === 'bool') {
+        //       typVal = curVal;
+        //     } else if (decodeTypes[k] === 'int') {
+        //       typVal = parseInt(curVal, 10);
+        //     } else {
+        //       typVal = curVal;
+        //     }
+        //     params[k] = typVal;
+        //   }
+        // }
+        // if (this.getParam("select2_tags") === 'yes') { // not compatible with placeholder. <- This seems no longer true!
+        //   params.multiple = false;
+        //   params.tags = this.getParam('i18n');
+        //   delete params.minimumResultsForSearch;
+        // } else {
+        //   if (pl || (!defVal)) {
+        //     pl = pl || "";
+        //     // inserts placeholder option
+        //     if (this.getParam('multiple') !== 'yes') {
+        //       $(this._handle).prepend('<option></option>');
+        //     }
+        //     // creates default selection
+        //     if (!defVal) {
+        //       this._param.values.splice(0, 0, pl);
+        //       if (this._param.i18n !== this._param.values) { // FIXME: check that this is correct
+        //         this._param.i18n.splice(0, 0, pl);
+        //       }
+        //     }
+        //     params.allowClear = true;
+        //     params.placeholder = pl;
+        //   }
+        //   if (this.getParam('multiple') !== 'yes') {
+        //     if (this.getParam('typeahead') !== 'yes') {
+        //       params.minimumResultsForSearch = -1; // no search box
+        //     }
+        //   }
+        // }
+        // this._setData(defVal);
+        // $(this._handle).select2(params).change(
+        //   function (ev, data) {
+        //     if (!(data && data.synthetic)) { // short circuit if forged event (onLoad)
+        //       _this.update($(this).val()); // tells 'choice' instance to update its model
+        //     }
+        //   }
+        // );
+        // $(this._handle).prev('.select2-container').get(0).xttNoShallowClone = true; // prevent cloning
       },
 
       onLoad: function (aPoint, aDataSrc) {
@@ -220,7 +220,7 @@
             i18n = aXTNode.getAttribute('i18n'),
             _values = values ? _split(values) : [],
             _i18n = i18n ? _split(i18n) : undefined;
-          this._param.values = _values; // FIXME: validate both are same length
+          this._param.values = _values; // FIXME: should check that values and i18n are of same length
           this._param.i18n = _i18n || _values;
           this._content = defval || "";
         },
@@ -248,7 +248,7 @@
   $axel.plugin.register(
     'select2',
     { filterable: true, optional: true },
-    null, // default key-value pairs for the param attribute in the XTiger node
+    {}, // default key-value pairs for the param attribute in the XTiger node (_DEFAULTS in axel/src/core/plugin.js)
     _Editor
   );
 

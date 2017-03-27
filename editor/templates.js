@@ -10,6 +10,7 @@ function getDefaultTemplates () {
       [
       "Input.xhtml",
       "Choice.xhtml",
+      "select2.xhtml",
       "HTML.xhtml"
       ]
     },
