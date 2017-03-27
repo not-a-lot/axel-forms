@@ -99,7 +99,7 @@
       onInit: function (aDefaultData, anOptionAttr, aRepeater) {
         const values = this.getParam('values');
         if (this.getParam('hasClass')) {
-          // undocumented param, probably for additional styling
+          // undocumented 'hasClass' param, probably for additional styling
           xtdom.addClassName(this._handle, this.getParam('hasClass'));
         }
         if (this.getParam('multiple') === 'yes') {
@@ -111,11 +111,29 @@
            * make an array that we use as the 'data' parameter for select2
            */
           const optionData = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
-          const select2Params = {};
-          select2Params.data = optionData;
-          select2Params.dropdownParent = $(this.getDocument().body); /* important in the case where
+          const defaultVal = this.getDefaultData();
+          const ph = this.getParam('placeholder');
+          const select2Params = {
+            data: optionData,
+            dropdownParent: $(this.getDocument().body), /* important in the case where
            the template is inside an iframe. */
-          $(this._handle).select2(select2Params);
+          };
+          /* Placeholders are only displayed as long as no value is selected ; if a default value
+           * was specified, it is useless to want to add a placeholder, as it will never be shown
+           */
+          if (ph && !defaultVal) {
+            // oddly, the placeholder option works only if there is an empty option in first position
+            select2Params.data.unshift({id: "", text: ""});
+            select2Params.placeholder = ph;
+          }
+          const $select = $(this._handle).select2(select2Params);
+          // set the default selected value, if present in the params
+          /* currently, there is no way to specify a default value in the select2 options. It has
+           * to be done either in the HTML, or by setting the value after the object has been constructed
+           */
+          if (defaultVal) {
+            $select.val(defaultVal).trigger('change');
+          }
         }
       },
 
