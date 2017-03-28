@@ -1,0 +1,5 @@
+/3rd-part/*
+!/3rd-part/select2-4.0.3/
+
+/3rd-part/select2-4.0.3/*
+!/3rd-part/select2-4.0.3/dist/
