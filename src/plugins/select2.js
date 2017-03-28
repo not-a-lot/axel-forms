@@ -109,6 +109,10 @@
         /* instead of manually building the <option> elements, we
          * make an array that we use as the 'data' parameter for select2
          */
+        /* Note : we shouldn't have to build the options again if (aRepeater). But the placeholder
+         * needs to be set everytime, which is a problem if we want to make this change, because
+         * there needs to be an empty value at the beginning (see comment below).
+         */
         const optionData = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
         const defaultVal = this.getDefaultData();
         const ph = this.getParam('placeholder');
