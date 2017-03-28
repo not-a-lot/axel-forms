@@ -29,6 +29,11 @@
   </style>
 </head>
 <body>
+
+<h2>Basic usage</h2>
+
+<p>With a default selection.</p>
+
 <div class="demo extract">
   <p>
     I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn"/>
@@ -44,17 +49,17 @@
     <!-- in <xt:attribute types="choice" name="continent" default="Europe" param="filter=select2" values="Africa America Europe Oceania" option="unset"/>. -->
   </p>
 </div>
-<!--
+
 <p>Inside a repetition.</p>
 
 <div class="demo extract">
-  <p>Select your seasons by prefernce order :
-    <xt:repeat minOccurs="1" maxOccurs="*" label="Seasons">
-      <xt:use types="choice" label="Season" param="filter=select2" values="Winter Spring Summer Autumn">Winter</xt:use>
+  <p>Select your seasons by preference order :
+    <xt:repeat minOccurs="1" maxOccurs="4" label="Seasons">
+      <xt:use types="select2" label="Season" values="Winter Spring Summer Autumn">Winter</xt:use>
     </xt:repeat>
   </p>
 </div>
-
+<!--
 <h3>As an element (and with i18n labels)</h3>
 
 <div class="demo extract">
