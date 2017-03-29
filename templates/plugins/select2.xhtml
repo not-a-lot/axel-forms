@@ -54,17 +54,17 @@
 
 <div class="demo extract">
   <p>Select your seasons by preference order :
-    <xt:repeat minOccurs="1" maxOccurs="4" label="Seasons">
+    <xt:repeat minOccurs="1" maxOccurs="*" label="Seasons">
       <xt:use types="select2" label="Season" values="Winter Spring Summer Autumn" param="placeholder=Choose…"/>
     </xt:repeat>
   </p>
 </div>
-<!--
+
 <h3>As an element (and with i18n labels)</h3>
 
 <div class="demo extract">
   <p>
-    I prefer to pay with <xt:use types="choice" label="Currency" param="filter=select2" values="EUR USD CHF" i18n="Euro Dollars Swiss-franc">USD</xt:use>.
+    I prefer to pay with <xt:use types="select2" label="Currency" values="EUR USD CHF" i18n="Euro Dollars Swiss-franc">USD</xt:use>.
   </p>
 </div>
 
@@ -74,13 +74,10 @@
 
 <div class="demo extract">
   <p>
-    Please select one or more Swiss canton <xt:use types="choice" label="Districts"
-                                                   param="multiple=yes;xvalue=District;typeahead=yes;filter=select2;placeholder=Choose something...;class=districts"
-                                                   values="AG AI AR BE BL BS FR GE GL GR JU LU NE NW OW SG SH SZ SO TI TG UR VS VD ZG ZH"
-                                                   i18n="Argovie Appenzell\ Interieur Appenzell\ Exterieur Berne Bale-Campagne Bale-Ville-Bale Fribourg Geneve Glaris Grisons Jura Lucerne Neuchatel Nidwald Obwald Saint-Gall Schaffhouse Schwytz Soleure Tessin Thurgovie Uri Valais Vaud Zoug Zurich" />
+    Please select one or more Swiss canton <xt:use types="select2" label="Districts" param="width=300px;multiple=yes;placeholder=Choose…;xvalue=District;class=districts" values="AG AI AR BE BL BS FR GE GL GR JU LU NE NW OW SG SH SZ SO TI TG UR VS VD ZG ZH" i18n="Argovie Appenzell\ Interieur Appenzell\ Exterieur Berne Bale-Campagne Bale-Ville Fribourg Geneve Glaris Grisons Jura Lucerne Neuchatel Nidwald Obwald Saint-Gall Schaffhouse Schwytz Soleure Tessin Thurgovie Uri Valais Vaud Zoug Zurich"/>
   </p>
 </div>
-
+<!--
 <h2>Multiple choices with double entry keys</h2>
 
 <p>You can declare the option labels using a complement separated from the principal label with two colons (<code>::</code>). The complement will appear within a <code>span</code> element with a <code>select2_complement</code> class name so you can style it. This is useful to create double entry selection lists where you can use either the label or the complement as a key for keyboard access. You can change the complement class using the <var>select2_complement</var> parameter .</p>

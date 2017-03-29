@@ -180,7 +180,7 @@
         curVal = this.getParam('select2_' + k);
         if (curVal) {
           if (decodeTypes[k] === 'bool') {
-            typVal = curVal === 'true' ? true : false;
+            typVal = curVal === 'true';
           } else if (decodeTypes[k] === 'int') {
             typVal = parseInt(curVal, 10);
           } else {
@@ -189,7 +189,7 @@
           params[k] = typVal;
         }
       }
-      if (this.getParam("select2_tags") === 'yes') { // not compatible with placeholder
+      if (this.getParam("select2_tags") === 'yes') { // not compatible with placeholder <- seems no longer true with S2 4.x
         params.multiple = false;
         params.tags = this.getParam('i18n');
         delete params.minimumResultsForSearch;
@@ -203,7 +203,7 @@
           // creates default selection
           if (!defval) {
             this._param.values.splice(0,0,pl);
-            if (this._param.i18n !== this._param.values) { // FIXME: check its correct
+            if (this._param.i18n !== this._param.values) { // FIXME: check it's correct
               this._param.i18n.splice(0,0,pl);
             }
           }

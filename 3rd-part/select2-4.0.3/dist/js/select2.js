@@ -1637,7 +1637,7 @@ S2.define('select2/selection/multiple',[
     var $container = $(
       '<li class="select2-selection__choice">' +
         '<span class="select2-selection__choice__remove" role="presentation">' +
-          '&times;' +
+          '×' +
         '</span>' +
       '</li>'
     );

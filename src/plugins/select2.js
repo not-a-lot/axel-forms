@@ -1,6 +1,6 @@
 (function($axel) {
 
-  let _Editor = (function() {
+  const _Editor = (function() {
 
     /** Splits string s on every space not preceded with a backslash "\ "
      * @param {String} s - The string to split
@@ -23,15 +23,6 @@
         data[index] = { id: item, text: i18nValues[index]};
       });
       return data;
-    }
-
-    const decodeTypes = {
-      dropdownAutoWidth : 'bool',
-      minimumResultsForSearch : 'int',
-      closeOnSelect : 'bool',
-      width : 'str',
-      maximumSelectionSize : 'int',
-      minimumInputLength : 'int'
     }
 
     function formatResult(state, container, query, escapeMarkup, openTag) {
@@ -76,6 +67,29 @@
       }
     }
 
+    // compute if new state is significative (i.e. leads to some non empty XML output)
+    // meaningful iff there is no default selection (i.e. there is a placeholder)
+    function _calcChange (defval, model) {
+      let res = true;
+      if (! defval) {
+        if (typeof model === "string") { // single
+          res = model !== defval;
+        } else { // multiple
+          if (!model || ((model.length === 1) && !model[0])) {
+            res = false;
+          }
+        }
+      } else { // FIXME: assumes no multiple default values
+        res = model !== defval;
+      }
+      return res;
+    }
+
+    function formatInputTooShort(input, min) {
+      const n = min - input.length;
+      return xtiger.util.getLocaleString('hintMinInputSize', { 'n' : n });
+    }
+
     return {
       ////////////////////////
       // Life cycle methods //
@@ -100,37 +114,67 @@
         const values = this.getParam('values');
         if (this.getParam('hasClass')) {
           // undocumented 'hasClass' param, probably for additional styling
-          xtdom.addClassName(this._handle, this.getParam('hasClass'));
+          xtdom.addClassName(this.getHandle(), this.getParam('hasClass'));
         }
         if (this.getParam('multiple') === 'yes') {
-          this._handle.setAttribute("multiple", "");
+          this.getHandle().setAttribute('multiple', ''); // for boolean attributes, just use '' as value in setAttribute
         }
 
         /* instead of manually building the <option> elements, we
          * make an array that we use as the 'data' parameter for select2
          */
         /* Note : we shouldn't have to build the <option>s again if (aRepeater). But it seems that
-         * if we use a placeholder, we are currently forced to do so everytime, because of
-         * the required empty entry at the beginning of the array (see comment below).
+         * if we use a placeholder, we are currently forced to build the array everytime, because of
+         * the required empty entry at the beginning of the array (see comment below). Could use a cache.
          */
         const optionData = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
         const defaultVal = this.getDefaultData();
+        // FIXME : issue with empty entry with just a close button when multiple and placeholder at the same time. Yet, this works fine in another separate example...
+
+        /* Several options have changed names or work
+         * differently than in Select2 3.x :
+         * https://github.com/select2/select2/releases/tag/4.0.0-beta.1
+         *
+         * formatSelection -> templateSelection
+         * formatResult -> templateResul
+         *
+         * internationalisation :
+         * formatInputTooShort -> language.inputTooShort
+         * ...
+         */
+        const complementClass = this.getParam("complement");
+        const tag = complementClass ? ' - <span class="' + complementClass + '">' : undefined;
+        const formRes = complementClass ? function (s, c, q, e) {
+          return formatResult(s, c, q, e, tag);
+        } : formatResult;
+
         const ph = this.getParam('placeholder');
         const select2Params = {
           data: optionData,
           dropdownParent: $(this.getDocument().body), /* important in the case where
-         the template is inside an iframe. */
+          the template is inside an iframe. */
         };
-        /* Placeholders are only displayed as long as no value is selected ; if a default value
+
+        if (this.getParam('tags') === 'yes') {
+          select2Params.tags = true;
+          this.getHandle().setAttribute('multiple', ''); // make sure the select has its multiple attr,
+          // otherwise 'tags' does nothing
+        }
+        /* Placeholders are only displayed as long as no value is selected; if a default value
          * was specified, it is useless to want to add a placeholder, as it will never be shown
          */
         if (ph && !defaultVal) {
-          /* oddly, the placeholder option works only if there is an empty option in first position
-           * (is that a bug in Select2 ?) */
+          // the placeholder option works only if there is an empty <option> in first position
           select2Params.data.unshift({id: "", text: ""});
           select2Params.placeholder = ph;
         }
-        const $select = $(this._handle).select2(select2Params);
+
+        // parse other extra Select2 parameters
+        this._parseExtraParamsAndExtend(select2Params);
+        // TODO missing options : disabled, tokenSeparators
+
+        // call the Select2 library
+        const $select = $(this.getHandle()).select2(select2Params);
         // set the default selected value, if present in the params
         /* currently, there is no way to specify a default value in the select2 options. It has
          * to be done either in the HTML, or by setting the value after the object has been constructed
@@ -138,87 +182,81 @@
         if (defaultVal) {
           $select.val(defaultVal).trigger('change');
         }
+        // set the default value of the model, even if it is empty
+        this._setData(defaultVal);
+
         $select[0].nextSibling.xttNoShallowClone = true; /* we need to tell the repeater not to clone the
          span.select2-container element generated by Select2, which is next to the <select> handle */
+        this._$select = $select;
       },
 
-      // Awakes the editor to DOM's events, registering the callbacks for them
+      // The clone of the model made by an xt:repeat does not keep event listeners, need to add them each time
       onAwake: function () {
-        // let $handle = $(this._handle);
-        // $handle.prev('.select2-container').get(0).xttNoShallowClone = true;
-        // window.setTimeout(function() {
-        //   $('select.axel-choice').select2(select2Params);
-        // }, 5000);
-        // let _this = this,
-        //   defVal = this.getDefaultData(),
-        //   pl = this.getParam("placeholder"),
-        //   complementClass = this.getParam("complement"),
-        //   tag = complementClass ? ' - <span class="' + complementClass + '">' : undefined,
-        //   formRes = complementClass ? function (s, c, q, e) {
-        //     return formatResult(s, c, q, e, tag);
-        //   } : formatResult,
-        //   params = {
-        //     myDoc: this.getDocument(),
-        //     formatResult: formRes,
-        //     formatSelection: formatSelection,
-        //     matcher: accentProofMatcher,
-        //     formatInputTooShort: formatInputTooShort
-        //   }, k, curVal, typVal;
-        // for (k in decodeTypes) { // FIXME: typing system to be integrated with AXEL
-        //   curVal = this.getParam('select2_' + k);
-        //   if (curVal) {
-        //     if (decodeTypes[k] === 'bool') {
-        //       typVal = curVal;
-        //     } else if (decodeTypes[k] === 'int') {
-        //       typVal = parseInt(curVal, 10);
-        //     } else {
-        //       typVal = curVal;
-        //     }
-        //     params[k] = typVal;
-        //   }
-        // }
-        // if (this.getParam("select2_tags") === 'yes') { // not compatible with placeholder. <- This seems no longer true!
-        //   params.multiple = false;
-        //   params.tags = this.getParam('i18n');
-        //   delete params.minimumResultsForSearch;
-        // } else {
-        //   if (pl || (!defVal)) {
-        //     pl = pl || "";
-        //     // inserts placeholder option
-        //     if (this.getParam('multiple') !== 'yes') {
-        //       $(this._handle).prepend('<option></option>');
-        //     }
-        //     // creates default selection
-        //     if (!defVal) {
-        //       this._param.values.splice(0, 0, pl);
-        //       if (this._param.i18n !== this._param.values) { // FIXME: check that this is correct
-        //         this._param.i18n.splice(0, 0, pl);
-        //       }
-        //     }
-        //     params.allowClear = true;
-        //     params.placeholder = pl;
-        //   }
-        //   if (this.getParam('multiple') !== 'yes') {
-        //     if (this.getParam('typeahead') !== 'yes') {
-        //       params.minimumResultsForSearch = -1; // no search box
-        //     }
-        //   }
-        // }
-        // this._setData(defVal);
-        // $(this._handle).select2(params).change(
-        //   function (ev, data) {
-        //     if (!(data && data.synthetic)) { // short circuit if forged event (onLoad)
-        //       _this.update($(this).val()); // tells 'choice' instance to update its model
-        //     }
-        //   }
-        // );
-        // $(this._handle).prev('.select2-container').get(0).xttNoShallowClone = true; // prevent cloning
+        this._$select.on('change', function (ev, data) {
+          if (!(data && data.synthetic)) { // short circuit if onLoad ?
+            this.update(this.value); // update the model of the plugin instance
+          }
+        });
       },
 
       onLoad: function (aPoint, aDataSrc) {
+        let value, defval, option, xval,tmp;
+        if (aDataSrc.isEmpty(aPoint)) {
+          this.clear(false);
+        } else {
+          xval = this.getParam('xvalue');
+          defval = this.getDefaultData();
+          if (xval) { // custom label
+            value = [];
+            option = aDataSrc.getVectorFor(xval, aPoint);
+            while (option !== -1) {
+              tmp = aDataSrc.getDataFor(option);
+              if (tmp) {
+                value.push(tmp);
+              }
+              option = aDataSrc.getVectorFor(xval, aPoint);
+            }
+            this._setData(value.length > 0 ? value : ""); // "string" and ["string"] are treated as equals by jQuery's val()
+          } else { // comma separated list
+            tmp = aDataSrc.getDataFor(aPoint);
+            if (typeof tmp !== 'string') {
+              tmp = '';
+            }
+            value = (tmp || defval).split(",");
+            this._setData(value);
+          }
+          this.set(false);
+          this.setModified(_calcChange(defval,value));
+        }
+
+        this._$select.trigger("change", { synthetic : true });
       },
 
       onSave: function (aLogger) {
+        if ((!this.isOptional()) || this.isSet()) {
+          if (this._data && (this._data !== this.getParam('placeholder'))) {
+            const tag = this.getParam('xvalue');
+            if (tag) {
+              if (typeof this._data === "string") {
+                aLogger.openTag(tag);
+                aLogger.write(this._data);
+                aLogger.closeTag(tag);
+              } else {
+                for (let i = 0; i < this._data.length; i++) {
+                  if (this._data[i] !== "") { // avoid empty default (i.e. placeholder)
+                    aLogger.openTag(tag);
+                    aLogger.write(this._data[i]);
+                    aLogger.closeTag(tag);
+                  }
+                }
+              }
+            } else {
+              aLogger.write(this._data.toString().replace(/^,/,''));
+            }
+          }
+        } else {
+          aLogger.discardNodeIfEmpty();
+        }
       },
 
       ////////////////////////////////
@@ -266,7 +304,74 @@
       /////////////////////////////
       // Specific plugin methods //
       /////////////////////////////
-      methods: {}
+      methods: {
+
+        _parseExtraParamsAndExtend : function(params) {
+          const paramTypes = { // S2 defaults on the right...
+            dropdownAutoWidth : 'bool', // false
+            closeOnSelect : 'bool', // false
+            selectOnClose: 'bool', // false
+            minimumInputLength: 'int', // 0
+            maximumInputLength: 'int', // 0
+            maximumSelectionLength: 'int', // 0
+            minimumResultsForSearch: 'int', // 0
+            width : 'str' /* 'resolve'. But S2 does also accept an int here. It is not nessary to
+            parse it as an int, however, as it works fine with S2 even as a string without unit,
+            in which the case the unit is assumed to be px. */
+          };
+          const extraParams = {};
+
+          Object.keys(paramTypes).map(function(paramName) {
+            const inputParamVal = this.getParam(paramName);
+            const type = paramTypes[paramName];
+            if (inputParamVal) {
+              if (type === 'bool') {
+                // if anything other than 'true' was written in the template,
+                // do nothing (default values are false anyhow)
+                if (inputParamVal === 'true') {
+                  extraParams[paramName] = true;
+                }
+              } else if (type === 'int') {
+                extraParams[paramName] = parseInt(inputParamVal, 10);
+              } else {
+                extraParams[paramName] = inputParamVal;
+              }
+            }
+          }, this); /* the 'this' on this line is the second arg to map,
+          the object to use as 'this' inside the callback function. */
+          Object.assign(params, extraParams); // copy the own properties of extraParams to params
+        },
+
+        _setData : function (value, withoutSideEffect) {
+          let filtered = value;
+          if (this.getParam("tags")) { // remove complement (see formatSelection)
+            if (value.indexOf('::') !== -1) {
+              filtered = value.substr(0, i);
+            }
+          }
+
+          if(!filtered && (this.getParam('placeholder'))) {
+            $(this.getHandle()).addClass("axel-choice-placeholder");
+          } else {
+            $(this.getHandle()).removeClass("axel-choice-placeholder");
+          }
+
+          this._data =  filtered || "";
+          if (!withoutSideEffect) {
+            $(this.getHandle()).val(filtered);
+          }
+        },
+
+        update : function (aData) {
+          const meaningful = _calcChange(this.getDefaultData(), aData);
+          this.setModified(meaningful);
+          this._setData(aData, true);
+          this.set(meaningful);
+          setTimeout(function() { this._$select.focus(); }, 50);
+          // keeps focus to be able to continue tabbing after drop list closing
+        }
+
+      }
     };
   }());
 
