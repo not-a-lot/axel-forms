@@ -36,7 +36,7 @@
 
 <div class="demo extract">
   <p>
-    I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn"/>
+    I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn" param="tags=yes"/>
     <!-- in <xt:attribute types="choice" name="continent" default="Europe" param="filter=select2" values="Africa America Europe Oceania" option="unset"/>. -->
   </p>
 </div>
@@ -77,20 +77,20 @@
     Please select one or more Swiss canton <xt:use types="select2" label="Districts" param="width=300px;multiple=yes;placeholder=Choose…;xvalue=District;class=districts" values="AG AI AR BE BL BS FR GE GL GR JU LU NE NW OW SG SH SZ SO TI TG UR VS VD ZG ZH" i18n="Argovie Appenzell\ Interieur Appenzell\ Exterieur Berne Bale-Campagne Bale-Ville Fribourg Geneve Glaris Grisons Jura Lucerne Neuchatel Nidwald Obwald Saint-Gall Schaffhouse Schwytz Soleure Tessin Thurgovie Uri Valais Vaud Zoug Zurich"/>
   </p>
 </div>
-<!--
+
 <h2>Multiple choices with double entry keys</h2>
 
 <p>You can declare the option labels using a complement separated from the principal label with two colons (<code>::</code>). The complement will appear within a <code>span</code> element with a <code>select2_complement</code> class name so you can style it. This is useful to create double entry selection lists where you can use either the label or the complement as a key for keyboard access. You can change the complement class using the <var>select2_complement</var> parameter .</p>
 
 <div class="demo extract">
   <p>
-    Please select one or more Swiss canton <xt:use types="choice" label="DistrictsDoubleKey"
-                                                   param="multiple=yes;xvalue=District;typeahead=yes;filter=select2;placeholder=Choose something...;class=districts;select2_complement=town;select2_dropdownAutoWidth=true;select2_minimumInputLength=2"
+    Please select one or more Swiss canton <xt:use types="select2" label="DistrictsDoubleKey"
+                                                   param="multiple=yes;xvalue=District;placeholder=Choose something...;class=districts;complement=town;dropdownAutoWidth=true;minimumInputLength=2"
                                                    values="AG AI AR BE BL BS FR GE GL GR JU LU NE NW OW SG SH SZ SO TI TG UR VS VD ZG ZH"
                                                    i18n="Argovie::Aarau Appenzell\ Interieur::Appenzell Appenzell\ Exterieur::Herisau Berne Bale-Campagne::Liestal Bale-Ville::Bale Fribourg Geneve Glaris Grisons::Coire Jura::Delémont Lucerne Neuchatel Nidwald::Stans Obwald::Sarnen Saint-Gall Schaffhouse Schwytz Soleure Tessin::Bellinzone Thurgovie::Frauenfeld Uri::Altdorf Valais::Sion Vaud::Lausanne Zoug Zurich" />
   </p>
 </div>
-
+<!--
 <h2>Single choice with free text entry</h2>
 
 <p>The <var>select2_tags</var> parameter uses the <i>tags</i> parameter of the select2 library to create a combo list with free text entry to enter new tag-like options. In that case the plugin will serialize current selection as either the new free text entry or as the display value (localized label) of the corresponding predefined option, excluding any complement appearing after <code>::</code>. For that reason if you declare the predefined options label inside the <var>i18n</var> attribute of the <code>xt:use</code> element, you may omit the <var>values</var> attribute.</p>

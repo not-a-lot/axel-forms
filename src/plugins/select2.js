@@ -25,19 +25,74 @@
       return data;
     }
 
-    function formatResult(state, container, query, escapeMarkup, openTag) {
-      let text = (state && state.text) ? state.text : '',
+    function translate(source) {
+      var cur, pos, res = '',
+        from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
+        to = 'AAAAAAOOOOOOOEEEECDIIIIUUUUNSYZ';
+      for (let i = 0; i < source.length; i++) {
+        cur = source.charAt(i).toUpperCase();
+        pos = from.indexOf(cur);
+        res += (pos >= 0) ? to.charAt(pos) : cur;
+      }
+      return res;
+    }
+
+    /* Copied and adapted from select2
+     */
+    function markMatch(text, term, markup, escapeMarkup, match) {
+      var tl = term.length;
+      markup.push(escapeMarkup(text.substring(0, match)));
+      markup.push("<span class='select2-match'>");
+      markup.push(escapeMarkup(text.substring(match, match + tl)));
+      markup.push("</span>");
+      markup.push(escapeMarkup(text.substring(match + tl, text.length)));
+    }
+
+    /**
+     * The function that gets called by Select2 for customising how the
+     * selected options are displayed in the form field (templateSelection S2 param)
+     * @param itemState - an object containing state information about the selected option
+     * @param container - the container of the option
+     * @returns {string|*} - may return HTML, but keep in mind the escape (https://github.com/select2/select2/issues/3423)
+     */
+    function formatSelection(itemState, container) {
+      let text;
+      // FIXME : even in the case of 'multiple', itemState never seems to be an array (not even in 3.4.0 - was this the case in an older version of S2 ?)
+      if (Array.isArray(itemState) && itemState[0]) { // tags option for free text entry
+        text = itemState[0].text || ''; // currently only multiple = 'no' supported
+      } else {
+        text = (itemState && itemState.text) ? itemState.text : '';
+      }
+      const i = text.indexOf('::');
+      return (i !== -1) ? text.substr(0, i) : text;
+    }
+
+    // FIXME : needs to be rewritten, S2 4.0.3 doesn't have query and escapeMarkup params
+    /*
+     * In v 3.4.0, the default formatResult function was :
+     * formatResult: function(result, container, query, escapeMarkup) {
+     *   var markup=[];
+     *   markMatch(result.text, query.term, markup, escapeMarkup);
+     *   return markup.join("");
+     * },
+     *
+     * Now : only has two named params : result, container
+     *
+     */
+    function formatResult(itemState, container, query, escapeMarkup, openTag) {
+      console.log(arguments);
+      let text = (itemState && itemState.text) ? itemState.text : '',
       i = text.indexOf('::'),
       oTag = openTag || ' - <span class="select2-complement">',
       cTag = '</span>',
       qTerm = translate(query.term),
       match, markup;
       if (text) {
-        markup=[];
-        if (i !== -1 ) { // with complement
+        markup = [];
+        if (i !== -1) { // with complement
           if (query.term.length > 0) {
             match = translate(text).indexOf(qTerm);
-            //match=$(state.element).data('key').indexOf(qTerm);
+            //match=$(itemState.element).data('key').indexOf(qTerm);
             if (match < i) {
               markMatch(text.substr(0, i), qTerm, markup, escapeMarkup, match);
               markup.push(oTag + escapeMarkup(text.substr(i + 2)) + cTag);
@@ -53,8 +108,8 @@
             return escapeMarkup(text.substr(0, i)) + oTag + escapeMarkup(text.substr(i + 2)) + cTag;
           }
         } else if (query.term.length > 0) { // w/o complement with term
-          match=translate(text).indexOf(qTerm);
-          //match=$(state.element).data('key').indexOf(qTerm);
+          match = translate(text).indexOf(qTerm);
+          //match=$(itemState.element).data('key').indexOf(qTerm);
           if (match >= 0) {
             markMatch(text, qTerm, markup, escapeMarkup, match);
           } else {
@@ -85,7 +140,7 @@
       return res;
     }
 
-    function formatInputTooShort(input, min) {
+    function inputTooShort(input, min) {
       const n = min - input.length;
       return xtiger.util.getLocaleString('hintMinInputSize', { 'n' : n });
     }
@@ -116,7 +171,8 @@
           // undocumented 'hasClass' param, probably for additional styling
           xtdom.addClassName(this.getHandle(), this.getParam('hasClass'));
         }
-        if (this.getParam('multiple') === 'yes') {
+        const bMultiple = this.getParam('multiple') === 'yes';
+        if (bMultiple) {
           this.getHandle().setAttribute('multiple', ''); // for boolean attributes, just use '' as value in setAttribute
         }
 
@@ -129,14 +185,13 @@
          */
         const optionData = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
         const defaultVal = this.getDefaultData();
-        // FIXME : issue with empty entry with just a close button when multiple and placeholder at the same time. Yet, this works fine in another separate example...
 
         /* Several options have changed names or work
          * differently than in Select2 3.x :
          * https://github.com/select2/select2/releases/tag/4.0.0-beta.1
          *
          * formatSelection -> templateSelection
-         * formatResult -> templateResul
+         * formatResult -> templateResult
          *
          * internationalisation :
          * formatInputTooShort -> language.inputTooShort
@@ -151,10 +206,16 @@
         const ph = this.getParam('placeholder');
         const select2Params = {
           data: optionData,
+          templateSelection: formatSelection,
+          templateResult: formRes,
+          language: {
+            inputTooShort: inputTooShort
+          },
           dropdownParent: $(this.getDocument().body), /* important in the case where
           the template is inside an iframe. */
         };
 
+        // FIXME : tags bug (incompatibility with AXEL ?). It is impossible to enter more than two characters for a new tag
         if (this.getParam('tags') === 'yes') {
           select2Params.tags = true;
           this.getHandle().setAttribute('multiple', ''); // make sure the select has its multiple attr,
@@ -163,7 +224,8 @@
         /* Placeholders are only displayed as long as no value is selected; if a default value
          * was specified, it is useless to want to add a placeholder, as it will never be shown
          */
-        if (ph && !defaultVal) {
+        if (ph && !defaultVal && !bMultiple) {
+          // FIXME : it should be possible to use multiple at the same time as a placeholder, as this works fine in other examples. But it seems incompatible with AXEL, with the following issue : initially, the placeholder is not displayed, and when selecting any option, an empty entry with just the close button in it is generated along with the selected option. The placeholder is not displayed initially, but is once any numbers of options have been selected, and subsquently deselected, with the field left empty.
           // the placeholder option works only if there is an empty <option> in first position
           select2Params.data.unshift({id: "", text: ""});
           select2Params.placeholder = ph;
@@ -192,9 +254,10 @@
 
       // The clone of the model made by an xt:repeat does not keep event listeners, need to add them each time
       onAwake: function () {
+        const instance = this; // for use inside the change event handler, where 'this' is the select element
         this._$select.on('change', function (ev, data) {
           if (!(data && data.synthetic)) { // short circuit if onLoad ?
-            this.update(this.value); // update the model of the plugin instance
+            instance.update(this.value); // update the model of the plugin instance
           }
         });
       },
@@ -367,7 +430,8 @@
           this.setModified(meaningful);
           this._setData(aData, true);
           this.set(meaningful);
-          setTimeout(function() { this._$select.focus(); }, 50);
+          const instance = this; // because inside timeout, 'this' is 'window'
+          setTimeout(function() { instance._$select.focus(); }, 50);
           // keeps focus to be able to continue tabbing after drop list closing
         }
 
