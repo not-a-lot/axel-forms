@@ -26,8 +26,8 @@
     }
 
     function translate(source) {
-      var cur, pos, res = '',
-        from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
+      let cur, pos, res = ''; const
+      from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
         to = 'AAAAAAOOOOOOOEEEECDIIIIUUUUNSYZ';
       for (let i = 0; i < source.length; i++) {
         cur = source.charAt(i).toUpperCase();
@@ -67,7 +67,6 @@
       return (i !== -1) ? text.substr(0, i) : text;
     }
 
-    // FIXME : needs to be rewritten, S2 4.0.3 doesn't have query and escapeMarkup params
     /*
      * In v 3.4.0, the default formatResult function was :
      * formatResult: function(result, container, query, escapeMarkup) {
@@ -77,22 +76,33 @@
      * },
      *
      * Now : only has two named params : result, container
-     *
+     * The templateResult function should return either HTML, which isn't escaped, or a string, which is escaped (any
+     * HTML is stripped). Since the formatResult function from the select2 filter already returns a string, we still
+     * return a string, but we change the escapeMarkup function (it's an S2 option) to just return its argument and
+     * do nothing. Furthermore here, we declare it inside the function, since it's not passed anymore as an argument
      */
-    function formatResult(itemState, container, query, escapeMarkup, openTag) {
-      console.log(arguments);
-      let text = (itemState && itemState.text) ? itemState.text : '',
+    // FIXME : this function might be simplified
+    function formatResult(result, container, openTag) {
+      const escapeMarkup = function(m) { return m; }; // FIXME : should it be different here than the 'global' one (which can't be accessed here ?) (the default can be accessed by doing : jQuery.fn.select2.defaults.defaults.escapeMarkup
+      /* if result.loading, we are not receiving actual results yet, but just "Searching…" or its localised variant
+       * we should return immediately, as there is no query term.
+       */
+      if (result.loading) {
+        return result.text;
+      }
+
+      let text = (result && result.text) ? result.text : '',
       i = text.indexOf('::'),
       oTag = openTag || ' - <span class="select2-complement">',
       cTag = '</span>',
-      qTerm = translate(query.term),
+      qTerm = translate(result.query),
       match, markup;
       if (text) {
         markup = [];
         if (i !== -1) { // with complement
-          if (query.term.length > 0) {
+          if (qTerm.length > 0) {
             match = translate(text).indexOf(qTerm);
-            //match=$(itemState.element).data('key').indexOf(qTerm);
+            //match=$(result.element).data('key').indexOf(qTerm);
             if (match < i) {
               markMatch(text.substr(0, i), qTerm, markup, escapeMarkup, match);
               markup.push(oTag + escapeMarkup(text.substr(i + 2)) + cTag);
@@ -107,9 +117,9 @@
           } else {
             return escapeMarkup(text.substr(0, i)) + oTag + escapeMarkup(text.substr(i + 2)) + cTag;
           }
-        } else if (query.term.length > 0) { // w/o complement with term
+        } else if (qTerm.length > 0) { // w/o complement with term
           match = translate(text).indexOf(qTerm);
-          //match=$(itemState.element).data('key').indexOf(qTerm);
+          //match=$(result.element).data('key').indexOf(qTerm);
           if (match >= 0) {
             markMatch(text, qTerm, markup, escapeMarkup, match);
           } else {
@@ -140,8 +150,8 @@
       return res;
     }
 
-    function inputTooShort(input, min) {
-      const n = min - input.length;
+    function inputTooShort(input) {
+      const n = input.minimum - input.input.length;
       return xtiger.util.getLocaleString('hintMinInputSize', { 'n' : n });
     }
 
@@ -186,21 +196,17 @@
         const optionData = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
         const defaultVal = this.getDefaultData();
 
-        /* Several options have changed names or work
-         * differently than in Select2 3.x :
+        /* Some info about the breaking changes between Select2 3.x and 4.x :
          * https://github.com/select2/select2/releases/tag/4.0.0-beta.1
-         *
-         * formatSelection -> templateSelection
-         * formatResult -> templateResult
-         *
-         * internationalisation :
-         * formatInputTooShort -> language.inputTooShort
-         * ...
          */
         const complementClass = this.getParam("complement");
         const tag = complementClass ? ' - <span class="' + complementClass + '">' : undefined;
-        const formRes = complementClass ? function (s, c, q, e) {
-          return formatResult(s, c, q, e, tag);
+
+        /* Define the templateResult function so that it receives an extra arg containing the
+         * complement tag in case the plugin complement option is used.
+         */
+        const formRes = complementClass ? function (result, container) {
+          return formatResult(result, container, tag);
         } : formatResult;
 
         const ph = this.getParam('placeholder');
@@ -208,8 +214,20 @@
           data: optionData,
           templateSelection: formatSelection,
           templateResult: formRes,
+          // templateResult: function (result) {
+          //   console.log(result);
+          //   return escapeMarkup(result.text);
+          // },
+          escapeMarkup: function (m) { return m; },
           language: {
-            inputTooShort: inputTooShort
+            inputTooShort: inputTooShort,
+            searching: function(params) {
+              /* params is an Object {term: <chars entered in the field>, _type: "query"}, and is unused in the default
+               * searching function. The only purpose of this function seems to internationalise the "Searching…" that
+               * templateResult gets a few times before an actual result is returned.
+               */
+              return 'Recherche…';
+            }
           },
           dropdownParent: $(this.getDocument().body), /* important in the case where
           the template is inside an iframe. */

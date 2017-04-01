@@ -836,7 +836,7 @@ S2.define('select2/results',[
 
     for (var d = 0; d < data.results.length; d++) {
       var item = data.results[d];
-
+      item.query = data.query;
       var $option = this.option(item);
 
       $options.push($option);
@@ -1008,6 +1008,7 @@ S2.define('select2/results',[
 
     container.on('results:all', function (params) {
       self.clear();
+      params.data.query = params.query.term;
       self.append(params.data);
 
       if (container.isOpen()) {
