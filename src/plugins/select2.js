@@ -79,7 +79,7 @@
      */
     // FIXME : this function might be simplified
     function formatResult(result, container, openTag) {
-      const escapeMarkup = function(m) { return m; }; // FIXME : should it be different here than the 'global' one (which can't be accessed here ?) (the default can be accessed by doing : jQuery.fn.select2.defaults.defaults.escapeMarkup
+      const escapeMarkup = jQuery.fn.select2.defaults.defaults.escapeMarkup; // FIXME : should it be different here than the 'global' one (which can't be accessed here ?) (the default can be accessed by doing : jQuery.fn.select2.defaults.defaults.escapeMarkup
       /* if result.loading, we are not receiving actual results yet, but just "Searching…" or its localised variant
        * we should return immediately, as there is no query term.
        */

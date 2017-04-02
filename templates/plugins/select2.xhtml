@@ -41,7 +41,7 @@
 
 <div class="demo extract">
   <p>
-    I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn" param="tags=yes"/>
+    I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn"/>
     <!-- in <xt:attribute types="choice" name="continent" default="Europe" param="filter=select2" values="Africa America Europe Oceania" option="unset"/>. -->
   </p>
 </div>
@@ -95,19 +95,19 @@
                                                    i18n="Argovie::Aarau Appenzell\ Interieur::Appenzell Appenzell\ Exterieur::Herisau Berne Bale-Campagne::Liestal Bale-Ville::Bale Fribourg Geneve Glaris Grisons::Coire Jura::Delémont Lucerne Neuchatel Nidwald::Stans Obwald::Sarnen Saint-Gall Schaffhouse Schwytz Soleure Tessin::Bellinzone Thurgovie::Frauenfeld Uri::Altdorf Valais::Sion Vaud::Lausanne Zoug Zurich" />
   </p>
 </div>
-<!--
+
 <h2>Single choice with free text entry</h2>
 
-<p>The <var>select2_tags</var> parameter uses the <i>tags</i> parameter of the select2 library to create a combo list with free text entry to enter new tag-like options. In that case the plugin will serialize current selection as either the new free text entry or as the display value (localized label) of the corresponding predefined option, excluding any complement appearing after <code>::</code>. For that reason if you declare the predefined options label inside the <var>i18n</var> attribute of the <code>xt:use</code> element, you may omit the <var>values</var> attribute.</p>
+<p>The <var>tags</var> parameter uses the <i>tags</i> parameter of the select2 library to create a combo list with free text entry to enter new tag-like options. In that case the plugin will serialize current selection as either the new free text entry or as the display value (localized label) of the corresponding predefined option, excluding any complement appearing after <code>::</code>. For that reason, if you declare the predefined options label inside the <var>i18n</var> attribute of the <code>xt:use</code> element, you may omit the <var>values</var> attribute.</p>
 
-<p>Using <var>select2_tags</var> implies that the <var>appearance</var> parameter is set to <i>compact</i> (generated as a drop down list, which is the default) and that the <var>multiple</var> parameter is set to <i>no</i> (which is the default).</p>
+<p>Using <var>tags</var> implies that the <var>appearance</var> parameter is set to <i>compact</i> (generated as a drop down list, which is the default) and that the <var>multiple</var> parameter is set to <i>yes</i>.</p>
 
-<p>Currently <var>select2_tags</var> must be declared with the <i>yes</i> value.</p>
+<p>Currently <var>tags</var> must be declared with the <i>yes</i> value.</p>
 
 <div class="demo extract">
   <p>
-    Please choose a nickname <xt:use types="choice" label="Nickname"
-                                     param="filter=select2;select2_tags=yes;select2_width=250px;typeahead=yes;select2_minimumInputLength=2;select2_complement=town;required=true"
+    Please choose a nickname <xt:use types="select2" label="Nickname"
+                                     param="select2;tags=yes;width=250px;typeahead=yes;minimumInputLength=2;complement=town;required=true"
                                      i18n="Fast::popular Furious Quick::very\ popular Rapid Slow" />
   </p>
   <p>
@@ -121,30 +121,30 @@
 
 <div class="demo extract">
   <p>Choose a professionnal category :
-    <xt:use types="choice" values="1 2 3 4 5" label="CategoryRef"
+    <xt:use types="select2" values="1 2 3 4 5" label="CategoryRef"
             i18n="Accountability Research&amp;Development Engineering Consultancy&amp;Planing Other"
-            param="select2_dropdownAutoWidth=true;select2_width=250px;select2_minimumResultsForSearch=2;filter=select2;multiple=no;typeahead=yes"
+            param="dropdownAutoWidth=true;width=250px;minimumResultsForSearch=2;multiple=no"
     >1</xt:use>
   </p>
 </div>
 
 <h2>Combining with the 'optional' filter</h2>
 
-<p>This supposes you have called something like <code>$axel.filter.applyTo({ 'optional' : 'choice' });</code> after loading the AXEL and AXEL-FORMS libraries, note that this is done automatically when using AXEL-FORMS.</p>
+<p>This supposes you have called something like <code>$axel.filter.applyTo({ 'optional' : 'select2' });</code> after loading the AXEL and AXEL-FORMS libraries, note that this is done automatically when using AXEL-FORMS.</p>
 
 <p>With a single choice without placeholder and without default value :</p>
 
 <div class="demo extract">
   <p>
-    My favourite fruit <xt:use types="choice" label="FruitWithOptionalFilter" param="filter=select2 optional" values="Apple Orange Strawberry Ananas"/>
+    My favourite fruit <xt:use types="select2" label="FruitWithOptionalFilter" param="filter=optional" values="Apple Orange Strawberry Ananas"/>
   </p>
 </div>
 
-<p>With a single choice without placeholder and with a default value (however you should better use a placeholder in that case) :</p>
+<p>With a single choice, without placeholder and with a default value (however you should better use a placeholder in that case) :</p>
 
 <div class="demo extract">
   <p>
-    My favourite fruit <xt:use types="choice" label="FruitWithOptionalFilterDV" param="filter=select2 optional" values="None Apple Orange Strawberry Ananas">None</xt:use>
+    My favourite fruit <xt:use types="select2" label="FruitWithOptionalFilterDV" param="filter=optional" values="None Apple Orange Strawberry Ananas">None</xt:use>
   </p>
 </div>
 
@@ -152,15 +152,15 @@
 
 <div class="demo extract">
   <p>
-    My favourite nickanme <xt:use types="choice" label="FruitWithOptionalFilterPH" param="filter=select2 optional;placeholder=Choose..." values="Alfredo Alberto Gilberto Rodrigo"/>
+    My favourite nickname <xt:use types="select2" label="FruitWithOptionalFilterPH" param="filter=optional;placeholder=Choose…" values="Alfredo Alberto Gilberto Rodrigo"/>
   </p>
 </div>
 
-<p>With a multiple choice the optoinal filter will discard the parent label if no choices are selected  :</p>
+<p>With a multiple choice, the optional filter will discard the parent label if no choices are selected :</p>
 
 <div class="demo extract">
   <p>
-    My favourite colors <xt:use types="choice" label="ColorsWithOptionalFilter" param="filter=select2 optional;multiple=yes;xvalue=Color" values="Blue Yellow Rose Green Violet Chartreuse"/>
+    My favourite colors <xt:use types="select2" label="ColorsWithOptionalFilter" param="filter=optional;multiple=yes;xvalue=Color" values="Blue Yellow Rose Green Violet Chartreuse"/>
   </p>
 </div>-->
 </body>
