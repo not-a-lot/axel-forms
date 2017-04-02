@@ -26,6 +26,7 @@
     }
 
     function translate(source) {
+      console.log(source);
       let cur, pos, res = ''; const
       from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
         to = 'AAAAAAOOOOOOOEEEECDIIIIUUUUNSYZ';
@@ -56,13 +57,8 @@
      * @returns {string|*} - may return HTML, but keep in mind the escape (https://github.com/select2/select2/issues/3423)
      */
     function formatSelection(itemState, container) {
-      let text;
-      // FIXME : even in the case of 'multiple', itemState never seems to be an array (not even in 3.4.0 - was this the case in an older version of S2 ?)
-      if (Array.isArray(itemState) && itemState[0]) { // tags option for free text entry
-        text = itemState[0].text || ''; // currently only multiple = 'no' supported
-      } else {
-        text = (itemState && itemState.text) ? itemState.text : '';
-      }
+      const text = itemState.text;
+      // the '::' check is for the complement option
       const i = text.indexOf('::');
       return (i !== -1) ? text.substr(0, i) : text;
     }
@@ -87,7 +83,7 @@
       /* if result.loading, we are not receiving actual results yet, but just "Searching…" or its localised variant
        * we should return immediately, as there is no query term.
        */
-      if (result.loading) {
+      if (result.loading || !result.query) {
         return result.text;
       }
 
