@@ -41,7 +41,8 @@
 
 <div class="demo extract">
   <p>
-    I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn"/>
+    <!--I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn"/>-->
+    I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn" param="tags=yes"/>
     <!-- in <xt:attribute types="choice" name="continent" default="Europe" param="filter=select2" values="Africa America Europe Oceania" option="unset"/>. -->
   </p>
 </div>
@@ -107,7 +108,7 @@
 <div class="demo extract">
   <p>
     Please choose a nickname <xt:use types="select2" label="Nickname"
-                                     param="select2;tags=yes;width=250px;typeahead=yes;minimumInputLength=2;complement=town;required=true"
+                                     param="tags=yes;width=250px;minimumInputLength=2;complement=comment;required=true"
                                      i18n="Fast::popular Furious Quick::very\ popular Rapid Slow" />
   </p>
   <p>
@@ -162,6 +163,15 @@
   <p>
     My favourite colors <xt:use types="select2" label="ColorsWithOptionalFilter" param="filter=optional;multiple=yes;xvalue=Color" values="Blue Yellow Rose Green Violet Chartreuse"/>
   </p>
-</div>-->
+</div>
+
+<h2>Using the Select2's ajax option as a data source instead of values</h2>
+
+<div class="demo extract">
+  <p>
+    I prefer <xt:attribute types="select2" name="githubrepo" param="ajax-url=https://api.github.com/search/repositories;ajax-datatype=json;ajax-delay=250;ajax-cache=yes;width=250px"/>
+  </p>
+</div>
+
 </body>
 </html>

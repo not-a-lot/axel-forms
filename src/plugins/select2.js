@@ -26,7 +26,6 @@
     }
 
     function translate(source) {
-      console.log(source);
       let cur, pos, res = ''; const
       from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
         to = 'AAAAAAOOOOOOOEEEECDIIIIUUUUNSYZ';
@@ -41,7 +40,7 @@
     /* Copied and adapted from select2
      */
     function markMatch(text, term, markup, escapeMarkup, match) {
-      var tl = term.length;
+      const tl = term.length;
       markup.push(escapeMarkup(text.substring(0, match)));
       markup.push("<span class='select2-match'>");
       markup.push(escapeMarkup(text.substring(match, match + tl)));
@@ -172,7 +171,6 @@
       },
 
       onInit: function (aDefaultData, anOptionAttr, aRepeater) {
-        const values = this.getParam('values');
         if (this.getParam('hasClass')) {
           // undocumented 'hasClass' param, probably for additional styling
           xtdom.addClassName(this.getHandle(), this.getParam('hasClass'));
@@ -181,16 +179,6 @@
         if (bMultiple) {
           this.getHandle().setAttribute('multiple', ''); // for boolean attributes, just use '' as value in setAttribute
         }
-
-        /* instead of manually building the <option> elements, we
-         * make an array that we use as the 'data' parameter for select2
-         */
-        /* Note : we shouldn't have to build the <option>s again if (aRepeater). But it seems that
-         * if we use a placeholder, we are currently forced to build the array everytime, because of
-         * the required empty entry at the beginning of the array (see comment below). Could use a cache.
-         */
-        const optionData = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
-        const defaultVal = this.getDefaultData();
 
         /* Some info about the breaking changes between Select2 3.x and 4.x :
          * https://github.com/select2/select2/releases/tag/4.0.0-beta.1
@@ -207,13 +195,8 @@
 
         const ph = this.getParam('placeholder');
         const select2Params = {
-          data: optionData,
           templateSelection: formatSelection,
           templateResult: formRes,
-          // templateResult: function (result) {
-          //   console.log(result);
-          //   return escapeMarkup(result.text);
-          // },
           escapeMarkup: function (m) { return m; },
           language: {
             inputTooShort: inputTooShort,
@@ -228,6 +211,48 @@
           dropdownParent: $(this.getDocument().body), /* important in the case where
           the template is inside an iframe. */
         };
+
+
+        let defaultVal = "";
+        // Data source : either a data array (values and possibly i18n params), or ajax
+        const ajaxUrl = this.getParam('ajax-url');
+        if (ajaxUrl) {
+          const ajax = {
+            url: ajaxUrl,
+            data: function (params) {
+              return {
+                q: params.term, // search term
+                page: params.page
+              };
+            },
+            processResults: function (data, params) {
+              // parse the results into the format expected by Select2
+              // since we are using custom formatting functions we do not need to
+              // alter the remote JSON data, except to indicate that infinite
+              // scrolling can be used
+              params.page = params.page || 1;
+
+              return {
+                results: data.items,
+                pagination: {
+                  more: (params.page * 30) < data.total_count
+                }
+              };
+            },
+          };
+          this._parseAjaxParamsAndExtend(ajax);
+          select2Params.ajax = ajax;
+        } else {
+          /* instead of manually building the <option> elements, we
+           * make an array that we use as the 'data' parameter for select2
+           */
+          /* Note : we shouldn't have to build the <option>s again if (aRepeater). But it seems that
+           * if we use a placeholder, we are currently forced to build the array everytime, because of
+           * the required empty entry at the beginning of the array (see comment below). Could use a cache.
+           */
+          select2Params.data = _buildDataArray(this.getParam('values'), this.getParam('i18n'));
+          defaultVal = this.getDefaultData();
+        }
 
         // FIXME : tags bug (incompatibility with AXEL ?). It is impossible to enter more than two characters for a new tag
         if (this.getParam('tags') === 'yes') {
@@ -373,7 +398,7 @@
         focus: function () {
         },
 
-        // Request to leave focus (fro tab navigation manager)
+        // Request to leave focus (from tab navigation manager)
         unfocus: function () {
         },
       },
@@ -382,6 +407,15 @@
       // Specific plugin methods //
       /////////////////////////////
       methods: {
+
+        _parseAjaxParamsAndExtend : function(oAjax) {
+          const ajaxParams = {
+            dataType: this.getParam('ajax-datatype'),
+            delay: parseInt(this.getParam('ajax-delay'), 10) || 250,
+            cache: this.getParam('ajax-cache') === 'yes' || true
+          };
+          Object.assign(oAjax, ajaxParams);
+        },
 
         _parseExtraParamsAndExtend : function(params) {
           const paramTypes = { // S2 defaults on the right...
