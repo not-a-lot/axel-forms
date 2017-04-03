@@ -77,9 +77,9 @@
      * return a string, but we change the escapeMarkup function (it's an S2 option) to just return its argument and
      * do nothing. Furthermore here, we declare it inside the function, since it's not passed anymore as an argument
      */
-    // FIXME : this function might be simplified
+    // FIXME : this function should probably return HTML in the complement option case (so that the result will not be escaped and we can keep the default escapeMarkup function), but return a string in the other cases (so that if there are ampersands and other XML-invalid characters in the result text, it will get escaped by the default escapeMarkup).
     function formatResult(result, container, openTag) {
-      const escapeMarkup = jQuery.fn.select2.defaults.defaults.escapeMarkup; // FIXME : should it be different here than the 'global' one (which can't be accessed here ?) (the default can be accessed by doing : jQuery.fn.select2.defaults.defaults.escapeMarkup
+      const escapeMarkup = jQuery.fn.select2.defaults.defaults.escapeMarkup;
       /* if result.loading, we are not receiving actual results yet, but just "Searching…" or its localised variant
        * we should return immediately, as there is no query term.
        */
