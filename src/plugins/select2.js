@@ -271,7 +271,7 @@
         const instance = this; // for use inside the change event handler, where 'this' is the select element
         this._$select.on('change', function (ev, data) {
           if (!(data && data.synthetic)) { // short circuit if onLoad ?
-            instance.update(this.value); // update the model of the plugin instance
+            instance.update($(this).val()); // update the model of the plugin instance (jQuery gives all the selected values in an array with .val(), whereas this.value without jQuery returns only the first value in the list that is selected.)
           }
         });
       },
