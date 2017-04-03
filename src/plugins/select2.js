@@ -84,7 +84,7 @@
        * we should return immediately, as there is no query term.
        */
       if (result.loading || !result.query) {
-        return result.text;
+        return escapeMarkup(result.text);
       }
 
       let text = (result && result.text) ? result.text : '',
