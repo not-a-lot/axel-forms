@@ -4098,7 +4098,7 @@ S2.define('select2/dropdown/infiniteScroll',[
   InfiniteScroll.prototype.createLoadingMore = function () {
     var $option = $(
       '<li ' +
-      'class="select2-results__option select2-results__option--load-more"' +
+      'class="select2-results__option select2-results__option--load-more" ' +
       'role="treeitem" aria-disabled="true"></li>'
     );
 
