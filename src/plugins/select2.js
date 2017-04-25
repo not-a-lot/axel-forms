@@ -2,6 +2,24 @@
 
   const _Editor = (function() {
 
+    /**
+     * A jQuery plugin that adds a function to update the <option>s of a
+     * Select2 field. Select2 4.0.3 still doesn't have a native function
+     * for this : https://github.com/select2/select2/issues/2830
+     */
+    (function($) {
+      $.fn.select2RefreshData = function (data) {
+        this.select2('data', data);
+
+        // Update options
+        const $select = $(this[0]);
+        const options = data.map(function(item) {
+          return '<option value="' + item.id + '">' + item.text + '</option>';
+        });
+        $select.html(options.join('')).change();
+      };
+    })(jQuery);
+
     /** Splits string s on every space not preceded with a backslash "\ "
      * @param {String} s - The string to split
      * @returns {Array}
@@ -481,7 +499,21 @@
           const instance = this; // because inside timeout, 'this' is 'window'
           setTimeout(function() { instance._$select.focus(); }, 50);
           // keeps focus to be able to continue tabbing after drop list closing
-        }
+        },
+
+        // dynamically constructs options list
+        ajax : function (config) { // config = Object {items: Array(2), restore: false}
+          // TODO : replace by a call to select2RefreshData :
+          // TODO : convert the key names in config.items (?)
+          // replaceOptions(this, config.items);
+          // // TODO: change defaultData because the value may diverge
+          // // (remove it if placeholder or set it to first option otherwise)
+          // if (config.restore) {
+          //   this._setData(this._data);
+          // } else {
+          //   this.clear(false);
+          // }
+        },
 
       }
     };

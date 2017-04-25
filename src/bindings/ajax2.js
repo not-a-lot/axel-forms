@@ -18,6 +18,7 @@
      */
     onInstall : function(host) {
       // 'this' is a jQuery object too (_installBinding in binding.js)
+      // host is the element containing the data-binding="ajax" attribute
       var cache, container;
       this.spec = host;
       this.editor = $axel(host);
