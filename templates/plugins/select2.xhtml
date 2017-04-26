@@ -169,9 +169,25 @@
 
 <div class="demo extract">
   <p>
-    I prefer <xt:attribute types="select2" name="githubrepo" param="ajax-url=http://localhost:8081;ajax-datatype=json;ajax-delay=250;ajax-cache=yes;width=250px"/>
+    I prefer <xt:attribute types="select2" param="ajax-url=http://localhost:8081;ajax-datatype=json;ajax-delay=250;ajax-cache=yes;width=250px"/>
   </p>
 </div>
+
+<h2>Demo of the Select2 plugin with the ajax binding (with repeated master field and with repeated target field) — See <code>templates/bindings/Ajax.xhtml</code></h2>
+
+<xt:repeat label="Companies" minOccurs="1" maxOccurs="*">
+  <fieldset class="company">
+    <label><xt:menu-marker/></label>
+    <p data-binding="ajax" data-variable="company" data-ajax-scope=".company" data-ajax-cache='{"1":[{"label":"Jacques","value":"1"},{"label":"Isabelle","value":"2"}],"2":[{"label":"Pierre","value":"3"},{"label":"Paul","value":"4"},{"label":"Aline","value":"5"}]}'>
+      Company : <xt:use types="select2" label="Company" values="1 2" i18n="Foo Bar" param="filter=event optional;placeholder=none"/>
+    </p>
+    <div>
+      <xt:repeat label="Contacts" minOccurs="0" maxOccurs="*">
+        <p data-ajax-trigger="company">Contact person : <xt:use types="select2" label="Contact" param="filter=optional"/><xt:menu-marker/></p>
+      </xt:repeat>
+    </div>
+  </fieldset>
+</xt:repeat>
 
 </body>
 </html>

@@ -501,20 +501,33 @@
           // keeps focus to be able to continue tabbing after drop list closing
         },
 
-        // dynamically constructs options list
-        ajax : function (config) { // config = Object {items: Array(2), restore: false}
-          // TODO : replace by a call to select2RefreshData :
-          // TODO : convert the key names in config.items (?)
-          // replaceOptions(this, config.items);
-          // // TODO: change defaultData because the value may diverge
-          // // (remove it if placeholder or set it to first option otherwise)
-          // if (config.restore) {
-          //   this._setData(this._data);
-          // } else {
-          //   this.clear(false);
-          // }
+        clear : function (doPropagate) {
+          this._setData(this.getDefaultData());
+          if (this.isOptional()) {
+            this.unset(doPropagate);
+          }
         },
 
+        /**
+         * Dynamically updates the <option>s list. This method is called by the
+         * ajax binding.
+         * @param config = {items: [{label:, value:}, ...], restore: bool}
+         * We need to change the names of the keys of the items array so that
+         * they correspond to the format expected by Select2 :
+         * value -> id and label -> text
+         */
+        ajax : function (config) {
+          const items = config.items.map(item => {
+            return { id: item.value, text: item.label }
+          });
+          this._$select.select2RefreshData(items);
+          // (remove it if placeholder or set it to first option otherwise)
+          if (config.restore) {
+            this._setData(this._data);
+          } else {
+            this.clear(false);
+          }
+        }
       }
     };
   }());
