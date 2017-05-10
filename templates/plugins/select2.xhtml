@@ -42,7 +42,7 @@
 <div class="demo extract">
   <p>
     <!--I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn"/>-->
-    I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn" param="tags=yes"/>
+    I prefer <xt:attribute types="select2" name="SeasonWithDefault" default="Autumn" values="Winter Spring Summer Autumn" param="read-only=yes"/>
     <!-- in <xt:attribute types="choice" name="continent" default="Europe" param="filter=select2" values="Africa America Europe Oceania" option="unset"/>. -->
   </p>
 </div>
@@ -51,7 +51,7 @@
 
 <div class="demo extract">
   <p>
-    I prefer <xt:use types="select2" label="SeasonPlaceHolder" param="placeholder=Choose…" values="Winter Spring Summer Autumn"/>
+    I prefer <xt:use types="select2" label="SeasonPlaceHolder" param="placeholder=Choose…;multiple=yes" values="Winter Spring Summer Autumn"/>
     <!-- in <xt:attribute types="choice" name="continent" default="Europe" param="filter=select2" values="Africa America Europe Oceania" option="unset"/>. -->
   </p>
 </div>

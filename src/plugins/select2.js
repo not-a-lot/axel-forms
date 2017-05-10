@@ -88,7 +88,10 @@
      *   return markup.join("");
      * },
      *
-     * Now : only has two named params : result, container
+     * Now : only has two named params : result, container. The default templateResult is :
+     * templateResult: function (result) {
+     *   return result.text;
+     * }
      * The templateResult function should return either HTML, which isn't escaped, or a string, which is escaped (any
      * HTML is stripped). Since the formatResult function from the select2 filter already returns a string, we still
      * return a string, but we change the escapeMarkup function (it's an S2 option) to just return its argument and
@@ -228,6 +231,7 @@
           },
           dropdownParent: $(this.getDocument().body), /* important in the case where
           the template is inside an iframe. */
+          disabled: this.getParam('read-only') === 'yes'
         };
 
 
@@ -282,7 +286,7 @@
          * was specified, it is useless to want to add a placeholder, as it will never be shown
          */
         if (ph && !defaultVal && !bMultiple) {
-          // FIXME : it should be possible to use multiple at the same time as a placeholder, as this works fine in other examples. But it seems incompatible with AXEL, with the following issue : initially, the placeholder is not displayed, and when selecting any option, an empty entry with just the close button in it is generated along with the selected option. The placeholder is not displayed initially, but is once any numbers of options have been selected, and subsquently deselected, with the field left empty.
+          // FIXME : it should be possible to use multiple at the same time as a placeholder, as this works fine in other examples. But it seems incompatible with AXEL, with the following issue : initially, the placeholder is not displayed, [[[and when selecting any option, an empty entry with just the close button in it is generated along with the selected option]]] <- no longer true, but why ? The placeholder is not displayed initially, but is once any numbers of options have been selected, and subsquently deselected, with the field left empty.
           // the placeholder option works only if there is an empty <option> in first position
           select2Params.data.unshift({id: "", text: ""});
           select2Params.placeholder = ph;
@@ -290,7 +294,7 @@
 
         // parse other extra Select2 parameters
         this._parseExtraParamsAndExtend(select2Params);
-        // TODO missing options : disabled, tokenSeparators
+        // TODO option not implemented : tokenSeparators
 
         // call the Select2 library
         const $select = $(this.getHandle()).select2(select2Params);
