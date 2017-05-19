@@ -43,6 +43,12 @@
       return data;
     }
 
+    /**
+     * Converts each character in source to uppercase and
+     * removes the diacritics.
+     * @param source {string}
+     * @returns {string}
+     */
     function translate(source) {
       let cur, pos, res = ''; const
       from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
@@ -54,16 +60,24 @@
       }
       return res;
     }
+    // Note : might want to use the stripDiacritics function from S2, but it is private... http://stackoverflow.com/questions/35557486/select2-custom-matcher-but-keep-stripdiacritics
 
-    /* Copied and adapted from select2
+    /**
+     * This is the function that frames the query term that matches the text into a
+     * <span class='select2-match'> ... </span> so that it will be underlined by the CSS
+     * @param text
+     * @param qTerm
+     * @param markup {Array}
+     * @param escapeFunction
+     * @param matchIndexInText
      */
-    function markMatch(text, term, markup, escapeMarkup, match) {
-      const tl = term.length;
-      markup.push(escapeMarkup(text.substring(0, match)));
+    function markMatch(text, qTerm, markup, escapeFunction, matchIndexInText) {
+      const tl = qTerm.length;
+      markup.push(escapeFunction(text.substring(0, matchIndexInText)));
       markup.push("<span class='select2-match'>");
-      markup.push(escapeMarkup(text.substring(match, match + tl)));
+      markup.push(escapeFunction(text.substring(matchIndexInText, matchIndexInText + tl)));
       markup.push("</span>");
-      markup.push(escapeMarkup(text.substring(match + tl, text.length)));
+      markup.push(escapeFunction(text.substring(matchIndexInText + tl, text.length)));
     }
 
     /**
@@ -78,6 +92,44 @@
       // the '::' check is for the complement option
       const i = text.indexOf('::');
       return (i !== -1) ? text.substr(0, i) : text;
+    }
+
+    function formatResultN(result, container, cOpenTag) {
+
+      /* If result.loading, we are not receiving actual results yet, but just
+       * "Searching…" or its localised variant. In that case or if there is no
+       * query at all because there is no search, but a fixed list of options,
+       * immediately return the text.
+       * Keep in my mind that formatResult is always called to format each
+       * option that is to be displayed in the list, but that when displaying
+       * the options from a dropdown list with no search box, we don't want to
+       * do anything to the option text. It is only when there is a query that we
+       * want to underline the query term inside each result.
+       */
+      if (result.loading || !result.query) {
+        return result.text;
+      }
+
+      const escapeMarkup = $.fn.select2.defaults.defaults.escapeMarkup;
+      const resultText = result.text;
+      const separatorIndex = resultText.indexOf('::');
+      const cCloseTag = '</span>';
+      const qTerm = translate(result.query);
+      const qTermIndexInText = translate(resultText).indexOf(qTerm);
+      let markup = [];
+
+      if (separatorIndex !== -1) { // with the complement param, and if the current <option> actually contains a complement, since not every <option> has to (ex. 'Tessin::Bellinzone', but just 'Berne' in the demo !)
+        if(qTermIndexInText < separatorIndex) { // match before '::'
+
+        } else if (qTermIndexInText > separatorIndex + 1) { // match after '::'
+
+        } else { // unusual case where '::' was searched ! (underline nothing)
+          return escapeMarkup(resultText.substr(0, i)) + cOpenTag + escapeMarkup(resultText.substr(i + 2)) + cCloseTag;
+        }
+      } else { // without the complement param, or the current <option> text doesn't have a complement
+
+      }
+      return markup.join('');
     }
 
     /*
@@ -97,7 +149,17 @@
      * return a string, but we change the escapeMarkup function (it's an S2 option) to just return its argument and
      * do nothing. Furthermore here, we declare it inside the function, since it's not passed anymore as an argument
      */
-    // FIXME : this function should probably return HTML in the complement option case (so that the result will not be escaped and we can keep the default escapeMarkup function), but return a string in the other cases (so that if there are ampersands and other XML-invalid characters in the result text, it will get escaped by the default escapeMarkup).
+    // FIXME : this function should probably return HTML in the complement option case (so that the result will not be escaped and we can keep the default escapeMarkup function), but return a string in the other cases (so that if there are ampersands and other XML-invalid characters in the result text, it will get escaped by the default escapeMarkup). <- This comment is wrong, it is actually not possible to return a string, because we always want to underline the qTerm in the result text. Or return HTML in the underline case only ??? EN FAIT : non, ce n'est pas possible, parce qu'on ne renvoie pas qc qui commence et finit par un tag. Donc on peut pas convertir en HTML -> toujours renvoyer une string, et on doit escape chaque partie séparément; ça ne peut pas être simplifié. SAUF... si on encadre par un <span> ? (pourrait pertuber le CSS)
+
+    /**
+     * ATTENTION : il faut bien garder à l'esprit que cette fonction est TOUJOURS appelée
+     * pour formater les résultats devant s'affiche dans la liste déroulante, MAIS lorsqu'il
+     * n'y a pas de *recherche*, c'est-à-dire pas de query, on veut juste renvoyer le texte. Sinon, on veut souligner le qTerm dans le résultat !
+     * @param result
+     * @param container
+     * @param openTag
+     * @returns {*}
+     */
     function formatResult(result, container, openTag) {
       const escapeMarkup = jQuery.fn.select2.defaults.defaults.escapeMarkup;
       /* if result.loading, we are not receiving actual results yet, but just "Searching…" or its localised variant
@@ -107,16 +169,16 @@
         return escapeMarkup(result.text);
       }
 
-      let text = (result && result.text) ? result.text : '',
+      let text = (result && result.text) ? result.text : '', // useless, taken care of by the previous cond !
       i = text.indexOf('::'),
-      oTag = openTag || ' - <span class="select2-complement">',
+      oTag = openTag || ' - <span class="select2-complement">', // this || ... is actually useless !
       cTag = '</span>',
       qTerm = translate(result.query),
       match, markup;
-      if (text) {
+      if (text) { // text ne peut jamais être vide ici !
         markup = [];
         if (i !== -1) { // with complement
-          if (qTerm.length > 0) {
+          if (qTerm.length > 0) { // always true !
             match = translate(text).indexOf(qTerm);
             //match=$(result.element).data('key').indexOf(qTerm);
             if (match < i) {
@@ -130,7 +192,7 @@
             } else {
               return escapeMarkup(text.substr(0, i)) + oTag + escapeMarkup(text.substr(i + 2)) + cTag;
             }
-          } else {
+          } else { // never happens
             return escapeMarkup(text.substr(0, i)) + oTag + escapeMarkup(text.substr(i + 2)) + cTag;
           }
         } else if (qTerm.length > 0) { // w/o complement with term
@@ -138,10 +200,10 @@
           //match=$(result.element).data('key').indexOf(qTerm);
           if (match >= 0) {
             markMatch(text, qTerm, markup, escapeMarkup, match);
-          } else {
+          } else { // never happens
             return text;
           }
-        } else {
+        } else { // never happens
           return text;
         }
         return markup.join("");
