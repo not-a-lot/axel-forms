@@ -51,7 +51,7 @@
 
 <div class="demo extract">
   <p>
-    I prefer <xt:use types="select2" label="SeasonPlaceHolder" param="placeholder=Choose…;multiple=yes" values="Winter Spring Summer Autumn"/>
+    I prefer <xt:use types="select2" label="SeasonPlaceHolder" param="placeholder=Choose…;multiple=yes;width=100%" values="Winter Spring Summer Autumn"/>
     <!-- in <xt:attribute types="choice" name="continent" default="Europe" param="filter=select2" values="Africa America Europe Oceania" option="unset"/>. -->
   </p>
 </div>
@@ -169,7 +169,7 @@
 
 <div class="demo extract">
   <p>
-    I prefer <xt:attribute types="select2" param="ajax-url=http://localhost:8081;ajax-datatype=json;ajax-delay=250;ajax-cache=yes;width=250px"/>
+    I prefer <xt:use label="S2AjaxSeason" types="select2" param="ajax-url=http://localhost:8081;ajax-datatype=json;ajax-delay=250;ajax-cache=yes;width=250px"/>
   </p>
 </div>
 

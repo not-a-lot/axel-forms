@@ -442,13 +442,13 @@
         _parseExtraParamsAndExtend : function(params) {
           const paramTypes = { // S2 defaults on the right...
             dropdownAutoWidth : 'bool', // false
-            closeOnSelect : 'bool', // false
+            closeOnSelect : 'bool', // true
             selectOnClose: 'bool', // false
             minimumInputLength: 'int', // 0
             maximumInputLength: 'int', // 0
             maximumSelectionLength: 'int', // 0
             minimumResultsForSearch: 'int', // 0
-            width : 'str' /* 'resolve'. But S2 does also accept an int here. It is not nessary to
+            width : 'str' /* 'resolve'. But S2 does also accept an int here. It is not necessary to
             parse it as an int, however, as it works fine with S2 even as a string without unit,
             in which the case the unit is assumed to be px. */
           };
@@ -459,10 +459,10 @@
             const type = paramTypes[paramName];
             if (inputParamVal) {
               if (type === 'bool') {
-                // if anything other than 'true' was written in the template,
-                // do nothing (default values are false anyhow)
                 if (inputParamVal === 'true') {
                   extraParams[paramName] = true;
+                } else {
+                  extraParams[paramName] = false;
                 }
               } else if (type === 'int') {
                 extraParams[paramName] = parseInt(inputParamVal, 10);
