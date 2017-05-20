@@ -1,19 +1,19 @@
-(function($axel) {
+(function ($axel) {
 
-  const _Editor = (function() {
+  const _Editor = (function () {
 
     /**
      * A jQuery plugin that adds a function to update the <option>s of a
      * Select2 field. Select2 4.0.3 still doesn't have a native function
      * for this : https://github.com/select2/select2/issues/2830
      */
-    (function($) {
+    (function ($) {
       $.fn.select2RefreshData = function (data) {
         this.select2('data', data);
 
         // Update options
         const $select = $(this[0]);
-        const options = data.map(function(item) {
+        const options = data.map(function (item) {
           return '<option value="' + item.id + '">' + item.text + '</option>';
         });
         $select.html(options.join('')).change();
@@ -30,15 +30,17 @@
       } else {
         const res = s.replace(/\\ /g, "&nbsp;");
         return xtiger.util.array_map(res.split(' '),
-          function (e) { return e.replace(/&nbsp;/g, " "); }
+          function (e) {
+            return e.replace(/&nbsp;/g, " ");
+          }
         );
       }
     } // FIXME: move to xtiger.util
 
     function _buildDataArray(values, i18nValues) {
       let data = new Array(values.length);
-      values.forEach(function(item, index) {
-        data[index] = { id: item, text: i18nValues[index]};
+      values.forEach(function (item, index) {
+        data[index] = {id: item, text: i18nValues[index]};
       });
       return data;
     }
@@ -50,8 +52,9 @@
      * @returns {string}
      */
     function translate(source) {
-      let cur, pos, res = ''; const
-      from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
+      let cur, pos, res = '';
+      const
+        from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
         to = 'AAAAAAOOOOOOOEEEECDIIIIUUUUNSYZ';
       for (let i = 0; i < source.length; i++) {
         cur = source.charAt(i).toUpperCase();
@@ -60,7 +63,9 @@
       }
       return res;
     }
-    // Note : might want to use the stripDiacritics function from S2, but it is private... http://stackoverflow.com/questions/35557486/select2-custom-matcher-but-keep-stripdiacritics
+
+    // Note : might want to use the stripDiacritics function from S2, but it is private...
+    // http://stackoverflow.com/questions/35557486/select2-custom-matcher-but-keep-stripdiacritics
 
     /**
      * This is the function that frames the query term that matches the text into a
@@ -85,7 +90,8 @@
      * selected options are displayed in the form field (templateSelection S2 param)
      * @param itemState - an object containing state information about the selected option
      * @param container - the container of the option
-     * @returns {string|*} - may return HTML, but keep in mind the escape (https://github.com/select2/select2/issues/3423)
+     * @returns {string|*} - may return HTML, but keep in mind the escape
+     *   (https://github.com/select2/select2/issues/3423)
      */
     function formatSelection(itemState, container) {
       const text = itemState.text;
@@ -94,7 +100,54 @@
       return (i !== -1) ? text.substr(0, i) : text;
     }
 
-    function formatResultN(result, container, cOpenTag) {
+    /**
+     * This function specifies how the options/search results are displayed inside the
+     * drop-down list. When there is no *search*, that is, no query, we only return
+     * the text. Otherwise, we want to underline the query term inside the result.
+     * @param result
+     * @param container
+     * @param cOpenTag
+     * @returns {*}
+     */
+    function templateResult(result, container, cOpenTag) {
+
+      /*
+       * In v 3.4.0, the default formatResult function was :
+       * formatResult: function(result, container, query, escapeMarkup) {
+       *   var markup=[];
+       *   markMatch(result.text, query.term, markup, escapeMarkup);
+       *   return markup.join("");
+       * },
+       *
+       * Now : only has two named params : result, container. The default templateResult is :
+       * templateResult: function (result) {
+       *   return result.text;
+       * }
+       *
+       * Patched Select2 to include back 'query' into result.
+       */
+
+      /* IMPORTANT ! Immediately after calling the templateResult function, Select2 escapes its output.
+       * Below, we get the default Select2 escape function. It only escapes what is given to it if the
+       * argument is of type string. But since we want to underline the query term in <option>
+       * texts and have to use html <span>s for this, we should either return HTML (built with
+       * jQuery. It's possible to do so with S2, it works.), or as we do now, return strings but use the
+       * identity function as the escape function (which we do below, in the parameters of the S2 constructor), and
+       * escape the special characters ourselves here in formatResult. This is why we have to get this escapeMarkup
+       * function. The problem with the first possibility, i.e. returning HTML, is that we cannot really do that,
+       * because what we produce here is not surrounded by tags; the results are strings to which we possibly add a
+       * span somewhere. Hence, if we try to convert that to HTML, jQuery will only keep what is inside the span.
+       *
+       * Another important thing : it's probably not possible to escape the result text only once at the beginning of
+       * the function (and we therefore have to escape each part separately). This is because if we escaped right from
+       * the start, the query term might match letters that come from the escape. For example, the result text might
+       * contain an '&', which is escaped to '&amp;', and the query term could be 'am'. If the actual 'am' in the result
+       * text is after the ampersand, we will underline the wrong characters, because indexOf returns the position of
+       * the first occurrence. Of course, it would be possible to modify our function to deal with that, but leaving as
+       * it is for now. Finding the match index and then escaping the whole text may also fail, because escaping changes
+       * the length of the string.
+       */
+      const esc = $.fn.select2.defaults.defaults.escapeMarkup;
 
       /* If result.loading, we are not receiving actual results yet, but just
        * "Searching…" or its localised variant. In that case or if there is no
@@ -107,114 +160,43 @@
        * want to underline the query term inside each result.
        */
       if (result.loading || !result.query) {
-        return result.text;
+        return esc(result.text);
       }
 
-      const escapeMarkup = $.fn.select2.defaults.defaults.escapeMarkup;
       const resultText = result.text;
       const separatorIndex = resultText.indexOf('::');
       const cCloseTag = '</span>';
+      /* We convert both the query term and the result text with the translate function,
+       * so that we can do a case- and diacritic-insensitive match.
+       */
       const qTerm = translate(result.query);
       const qTermIndexInText = translate(resultText).indexOf(qTerm);
       let markup = [];
 
-      if (separatorIndex !== -1) { // with the complement param, and if the current <option> actually contains a complement, since not every <option> has to (ex. 'Tessin::Bellinzone', but just 'Berne' in the demo !)
-        if(qTermIndexInText < separatorIndex) { // match before '::'
-
+      if (separatorIndex !== -1) { /* with the complement param, and if the current <option> actually contains a
+       complement, since not every <option> has to (ex. 'Tessin::Bellinzone', but just 'Berne' in the demo !) */
+        if (qTermIndexInText < separatorIndex) { // match before '::'
+          markMatch(resultText.substr(0, separatorIndex), qTerm, markup, esc, qTermIndexInText);
+          markup.push(cOpenTag + esc(resultText.substr(separatorIndex + 2)) + cCloseTag);
         } else if (qTermIndexInText > separatorIndex + 1) { // match after '::'
-
+          markup.push(esc(resultText.substr(0, separatorIndex)));
+          markup.push(cOpenTag);
+          markMatch(resultText.substr(separatorIndex + 2), qTerm, markup, esc, qTermIndexInText - separatorIndex - 2);
+          markup.push(cCloseTag);
         } else { // unusual case where '::' was searched ! (underline nothing)
-          return escapeMarkup(resultText.substr(0, i)) + cOpenTag + escapeMarkup(resultText.substr(i + 2)) + cCloseTag;
+          return esc(resultText.substr(0, separatorIndex)) + cOpenTag + esc(resultText.substr(separatorIndex + 2)) + cCloseTag;
         }
       } else { // without the complement param, or the current <option> text doesn't have a complement
-
+        markMatch(resultText, qTerm, markup, esc, qTermIndexInText);
       }
-      return markup.join('');
-    }
-
-    /*
-     * In v 3.4.0, the default formatResult function was :
-     * formatResult: function(result, container, query, escapeMarkup) {
-     *   var markup=[];
-     *   markMatch(result.text, query.term, markup, escapeMarkup);
-     *   return markup.join("");
-     * },
-     *
-     * Now : only has two named params : result, container. The default templateResult is :
-     * templateResult: function (result) {
-     *   return result.text;
-     * }
-     * The templateResult function should return either HTML, which isn't escaped, or a string, which is escaped (any
-     * HTML is stripped). Since the formatResult function from the select2 filter already returns a string, we still
-     * return a string, but we change the escapeMarkup function (it's an S2 option) to just return its argument and
-     * do nothing. Furthermore here, we declare it inside the function, since it's not passed anymore as an argument
-     */
-    // FIXME : this function should probably return HTML in the complement option case (so that the result will not be escaped and we can keep the default escapeMarkup function), but return a string in the other cases (so that if there are ampersands and other XML-invalid characters in the result text, it will get escaped by the default escapeMarkup). <- This comment is wrong, it is actually not possible to return a string, because we always want to underline the qTerm in the result text. Or return HTML in the underline case only ??? EN FAIT : non, ce n'est pas possible, parce qu'on ne renvoie pas qc qui commence et finit par un tag. Donc on peut pas convertir en HTML -> toujours renvoyer une string, et on doit escape chaque partie séparément; ça ne peut pas être simplifié. SAUF... si on encadre par un <span> ? (pourrait pertuber le CSS)
-
-    /**
-     * ATTENTION : il faut bien garder à l'esprit que cette fonction est TOUJOURS appelée
-     * pour formater les résultats devant s'affiche dans la liste déroulante, MAIS lorsqu'il
-     * n'y a pas de *recherche*, c'est-à-dire pas de query, on veut juste renvoyer le texte. Sinon, on veut souligner le qTerm dans le résultat !
-     * @param result
-     * @param container
-     * @param openTag
-     * @returns {*}
-     */
-    function formatResult(result, container, openTag) {
-      const escapeMarkup = jQuery.fn.select2.defaults.defaults.escapeMarkup;
-      /* if result.loading, we are not receiving actual results yet, but just "Searching…" or its localised variant
-       * we should return immediately, as there is no query term.
-       */
-      if (result.loading || !result.query) {
-        return escapeMarkup(result.text);
-      }
-
-      let text = (result && result.text) ? result.text : '', // useless, taken care of by the previous cond !
-      i = text.indexOf('::'),
-      oTag = openTag || ' - <span class="select2-complement">', // this || ... is actually useless !
-      cTag = '</span>',
-      qTerm = translate(result.query),
-      match, markup;
-      if (text) { // text ne peut jamais être vide ici !
-        markup = [];
-        if (i !== -1) { // with complement
-          if (qTerm.length > 0) { // always true !
-            match = translate(text).indexOf(qTerm);
-            //match=$(result.element).data('key').indexOf(qTerm);
-            if (match < i) {
-              markMatch(text.substr(0, i), qTerm, markup, escapeMarkup, match);
-              markup.push(oTag + escapeMarkup(text.substr(i + 2)) + cTag);
-            } else if (match > i+1) {
-              markup.push(text.substr(0, i));
-              markup.push(oTag);
-              markMatch(text.substr(i + 2), qTerm, markup, escapeMarkup, match-i-2);
-              markup.push(cTag);
-            } else {
-              return escapeMarkup(text.substr(0, i)) + oTag + escapeMarkup(text.substr(i + 2)) + cTag;
-            }
-          } else { // never happens
-            return escapeMarkup(text.substr(0, i)) + oTag + escapeMarkup(text.substr(i + 2)) + cTag;
-          }
-        } else if (qTerm.length > 0) { // w/o complement with term
-          match = translate(text).indexOf(qTerm);
-          //match=$(result.element).data('key').indexOf(qTerm);
-          if (match >= 0) {
-            markMatch(text, qTerm, markup, escapeMarkup, match);
-          } else { // never happens
-            return text;
-          }
-        } else { // never happens
-          return text;
-        }
-        return markup.join("");
-      }
+      return markup.join(''); // just the join the final result, with '' as a separator (default is ',')
     }
 
     // compute if new state is significative (i.e. leads to some non empty XML output)
     // meaningful iff there is no default selection (i.e. there is a placeholder)
-    function _calcChange (defval, model) {
+    function _calcChange(defval, model) {
       let res = true;
-      if (! defval) {
+      if (!defval) {
         if (typeof model === "string") { // single
           res = model !== defval;
         } else { // multiple
@@ -230,7 +212,7 @@
 
     function inputTooShort(input) {
       const n = input.minimum - input.input.length;
-      return xtiger.util.getLocaleString('hintMinInputSize', { 'n' : n });
+      return xtiger.util.getLocaleString('hintMinInputSize', {'n': n});
     }
 
     return {
@@ -273,17 +255,19 @@
          * complement tag in case the plugin complement option is used.
          */
         const formRes = complementClass ? function (result, container) {
-          return formatResult(result, container, tag);
-        } : formatResult;
+          return templateResult(result, container, tag);
+        } : templateResult;
 
         const ph = this.getParam('placeholder');
         const select2Params = {
           templateSelection: formatSelection,
           templateResult: formRes,
-          escapeMarkup: function (m) { return m; },
+          escapeMarkup: function (m) {
+            return m;
+          },
           language: {
             inputTooShort: inputTooShort,
-            searching: function(params) {
+            searching: function (params) {
               /* params is an Object {term: <chars entered in the field>, _type: "query"}, and is unused in the default
                * searching function. The only purpose of this function seems to internationalise the "Searching…" that
                * templateResult gets a few times before an actual result is returned.
@@ -292,7 +276,7 @@
             }
           },
           dropdownParent: $(this.getDocument().body), /* important in the case where
-          the template is inside an iframe. */
+           the template is inside an iframe. */
           disabled: this.getParam('read-only') === 'yes'
         };
 
@@ -338,7 +322,8 @@
           defaultVal = this.getDefaultData();
         }
 
-        // FIXME : tags bug (incompatibility with AXEL ?). It is impossible to enter more than two characters for a new tag
+        // FIXME : tags bug (incompatibility with AXEL ?). It is impossible to enter more than two characters for a new
+        // tag
         if (this.getParam('tags') === 'yes') {
           select2Params.tags = true;
           this.getHandle().setAttribute('multiple', ''); // make sure the select has its multiple attr,
@@ -348,8 +333,12 @@
          * was specified, it is useless to want to add a placeholder, as it will never be shown
          */
         if (ph && !defaultVal && !bMultiple) {
-          // FIXME : it should be possible to use multiple at the same time as a placeholder, as this works fine in other examples. But it seems incompatible with AXEL, with the following issue : initially, the placeholder is not displayed, [[[and when selecting any option, an empty entry with just the close button in it is generated along with the selected option]]] <- no longer true, but why ? The placeholder is not displayed initially, but is once any numbers of options have been selected, and subsquently deselected, with the field left empty.
-          // the placeholder option works only if there is an empty <option> in first position
+          // FIXME : it should be possible to use multiple at the same time as a placeholder, as this works fine in
+          // other examples. But it seems incompatible with AXEL, with the following issue : initially, the placeholder
+          // is not displayed, [[[and when selecting any option, an empty entry with just the close button in it is
+          // generated along with the selected option]]] <- no longer true, but why ? The placeholder is not displayed
+          // initially, but is once any numbers of options have been selected, and subsquently deselected, with the
+          // field left empty. the placeholder option works only if there is an empty <option> in first position
           select2Params.data.unshift({id: "", text: ""});
           select2Params.placeholder = ph;
         }
@@ -370,7 +359,8 @@
         // set the default value of the model, even if it is empty
         this._setData(defaultVal);
 
-        $select[0].nextSibling.xttNoShallowClone = true; /* we need to tell the repeater not to clone the
+        $select[0].nextSibling.xttNoShallowClone = true;
+        /* we need to tell the repeater not to clone the
          span.select2-container element generated by Select2, which is next to the <select> handle */
         this._$select = $select;
       },
@@ -380,13 +370,15 @@
         const instance = this; // for use inside the change event handler, where 'this' is the select element
         this._$select.on('change', function (ev, data) {
           if (!(data && data.synthetic)) { // short circuit if onLoad ?
-            instance.update($(this).val()); // update the model of the plugin instance (jQuery gives all the selected values in an array with .val(), whereas this.value without jQuery returns only the first value in the list that is selected.)
+            instance.update($(this).val()); // update the model of the plugin instance (jQuery gives all the selected
+                                            // values in an array with .val(), whereas this.value without jQuery
+                                            // returns only the first value in the list that is selected.)
           }
         });
       },
 
       onLoad: function (aPoint, aDataSrc) {
-        let value, defval, option, xval,tmp;
+        let value, defval, option, xval, tmp;
         if (aDataSrc.isEmpty(aPoint)) {
           this.clear(false);
         } else {
@@ -402,7 +394,8 @@
               }
               option = aDataSrc.getVectorFor(xval, aPoint);
             }
-            this._setData(value.length > 0 ? value : ""); // "string" and ["string"] are treated as equals by jQuery's val()
+            this._setData(value.length > 0 ? value : ""); // "string" and ["string"] are treated as equals by jQuery's
+                                                          // val()
           } else { // comma separated list
             tmp = aDataSrc.getDataFor(aPoint);
             if (typeof tmp !== 'string') {
@@ -412,10 +405,10 @@
             this._setData(value);
           }
           this.set(false);
-          this.setModified(_calcChange(defval,value));
+          this.setModified(_calcChange(defval, value));
         }
 
-        this._$select.trigger("change", { synthetic : true });
+        this._$select.trigger("change", {synthetic: true});
       },
 
       onSave: function (aLogger) {
@@ -437,7 +430,7 @@
                 }
               }
             } else {
-              aLogger.write(this._data.toString().replace(/^,/,''));
+              aLogger.write(this._data.toString().replace(/^,/, ''));
             }
           }
         } else {
@@ -492,7 +485,7 @@
       /////////////////////////////
       methods: {
 
-        _parseAjaxParamsAndExtend : function(oAjax) {
+        _parseAjaxParamsAndExtend: function (oAjax) {
           const ajaxParams = {
             dataType: this.getParam('ajax-datatype'),
             delay: parseInt(this.getParam('ajax-delay'), 10) || 250,
@@ -501,22 +494,22 @@
           Object.assign(oAjax, ajaxParams);
         },
 
-        _parseExtraParamsAndExtend : function(params) {
+        _parseExtraParamsAndExtend: function (params) {
           const paramTypes = { // S2 defaults on the right...
-            dropdownAutoWidth : 'bool', // false
-            closeOnSelect : 'bool', // true
+            dropdownAutoWidth: 'bool', // false
+            closeOnSelect: 'bool', // true
             selectOnClose: 'bool', // false
             minimumInputLength: 'int', // 0
             maximumInputLength: 'int', // 0
             maximumSelectionLength: 'int', // 0
             minimumResultsForSearch: 'int', // 0
-            width : 'str' /* 'resolve'. But S2 does also accept an int here. It is not necessary to
-            parse it as an int, however, as it works fine with S2 even as a string without unit,
-            in which the case the unit is assumed to be px. */
+            width: 'str' /* 'resolve'. But S2 does also accept an int here. It is not necessary to
+             parse it as an int, however, as it works fine with S2 even as a string without unit,
+             in which the case the unit is assumed to be px. */
           };
           const extraParams = {};
 
-          Object.keys(paramTypes).map(function(paramName) {
+          Object.keys(paramTypes).map(function (paramName) {
             const inputParamVal = this.getParam(paramName);
             const type = paramTypes[paramName];
             if (inputParamVal) {
@@ -532,12 +525,13 @@
                 extraParams[paramName] = inputParamVal;
               }
             }
-          }, this); /* the 'this' on this line is the second arg to map,
-          the object to use as 'this' inside the callback function. */
+          }, this);
+          /* the 'this' on this line is the second arg to map,
+           the object to use as 'this' inside the callback function. */
           Object.assign(params, extraParams); // copy the own properties of extraParams to params
         },
 
-        _setData : function (value, withoutSideEffect) {
+        _setData: function (value, withoutSideEffect) {
           let filtered = value;
           if (this.getParam("tags")) { // remove complement (see formatSelection)
             if (value.indexOf('::') !== -1) {
@@ -545,29 +539,31 @@
             }
           }
 
-          if(!filtered && (this.getParam('placeholder'))) {
+          if (!filtered && (this.getParam('placeholder'))) {
             $(this.getHandle()).addClass("axel-choice-placeholder");
           } else {
             $(this.getHandle()).removeClass("axel-choice-placeholder");
           }
 
-          this._data =  filtered || "";
+          this._data = filtered || "";
           if (!withoutSideEffect) {
             $(this.getHandle()).val(filtered);
           }
         },
 
-        update : function (aData) {
+        update: function (aData) {
           const meaningful = _calcChange(this.getDefaultData(), aData);
           this.setModified(meaningful);
           this._setData(aData, true);
           this.set(meaningful);
           const instance = this; // because inside timeout, 'this' is 'window'
-          setTimeout(function() { instance._$select.focus(); }, 50);
+          setTimeout(function () {
+            instance._$select.focus();
+          }, 50);
           // keeps focus to be able to continue tabbing after drop list closing
         },
 
-        clear : function (doPropagate) {
+        clear: function (doPropagate) {
           this._setData(this.getDefaultData());
           if (this.isOptional()) {
             this.unset(doPropagate);
@@ -582,9 +578,9 @@
          * they correspond to the format expected by Select2 :
          * value -> id and label -> text
          */
-        ajax : function (config) {
+        ajax: function (config) {
           const items = config.items.map(item => {
-            return { id: item.value, text: item.label }
+            return {id: item.value, text: item.label}
           });
           this._$select.select2RefreshData(items);
           // (remove it if placeholder or set it to first option otherwise)
@@ -600,11 +596,11 @@
 
   $axel.plugin.register(
     'select2',
-    { filterable: true, optional: true },
+    {filterable: true, optional: true},
     {}, // default key-value pairs for the param attribute in the XTiger node (_DEFAULTS in axel/src/core/plugin.js)
     _Editor
   );
 
-  $axel.filter.applyTo({'event' : 'select2'});
+  $axel.filter.applyTo({'event': 'select2'});
 
 }($axel));
