@@ -55,7 +55,7 @@
       let cur, pos, res = '';
       const
         from = 'ÀÁÂÃÄÅÒÓÔÕÕÖØÈÉÊËÇÐÌÍÎÏÙÚÛÜÑŠŸŽ',
-        to = 'AAAAAAOOOOOOOEEEECDIIIIUUUUNSYZ';
+          to = 'AAAAAAOOOOOOOEEEECDIIIIUUUUNSYZ';
       for (let i = 0; i < source.length; i++) {
         cur = source.charAt(i).toUpperCase();
         pos = from.indexOf(cur);
@@ -63,8 +63,7 @@
       }
       return res;
     }
-
-    // Note : might want to use the stripDiacritics function from S2, but it is private...
+    // Note : might want to use the stripDiacritics function from S2, but in 4.x, it has become private...
     // http://stackoverflow.com/questions/35557486/select2-custom-matcher-but-keep-stripdiacritics
 
     /**
