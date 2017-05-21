@@ -268,8 +268,10 @@
             inputTooShort: inputTooShort,
             searching: function (params) {
               /* params is an Object {term: <chars entered in the field>, _type: "query"}, and is unused in the default
-               * searching function. The only purpose of this function seems to internationalise the "Searching…" that
-               * templateResult gets a few times before an actual result is returned.
+               * searching function. The real purpose of this function seems to internationalise the "Searching…" that
+               * templateResult gets a few times before an actual result is returned, although params.term can be used
+               * to work around the removal of the 'query' parameter from the templateResult function (see the project
+               * report for details).
                */
               return 'Recherche…';
             }
