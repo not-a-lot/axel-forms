@@ -580,15 +580,19 @@
          * value -> id and label -> text
          */
         ajax: function (config) {
-          const items = config.items.map(item => {
-            return {id: item.value, text: item.label}
-          });
-          this._$select.select2RefreshData(items);
-          // (remove it if placeholder or set it to first option otherwise)
-          if (config.restore) {
-            this._setData(this._data);
-          } else {
-            this.clear(false);
+          if(config.items) { /* to prevent exception caused by config.items
+          being undefined on Input->Retrieve->Load, in the case where no
+          value had been selected in the master field */
+            const items = config.items.map(item => {
+              return {id: item.value, text: item.label}
+            });
+            this._$select.select2RefreshData(items);
+            // (remove it if placeholder or set it to first option otherwise)
+            if (config.restore) {
+              this._setData(this._data);
+            } else {
+              this.clear(false);
+            }
           }
         }
       }
