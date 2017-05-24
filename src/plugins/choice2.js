@@ -88,7 +88,7 @@
           style = { 'width' : this.getParam('choice2_width0') };
       viewNode= xtdom.createElement (aDocument, 'div');
       xtdom.addClassName(viewNode,'axel-choice2');
-      $(viewNode).html('<div class="select2-container-multi"' + _style(style) + '><ul class="select2-choices"></ul></div>');
+      $(viewNode).html('<div class="select2old34-container-multi"' + _style(style) + '><ul class="select2old34-choices"></ul></div>');
       aContainer.appendChild(viewNode);
       return viewNode;
      },
@@ -124,7 +124,7 @@
          // }
        }
       this._setData(defval);
-      $(this._handle).children('div.select2-container-multi').click($.proxy(this, '_handleClickOnChoices'));
+      $(this._handle).children('div.select2old34-container-multi').click($.proxy(this, '_handleClickOnChoices'));
       $(this._handle).find('li.choice2-label').click($.proxy(this, '_handleClickOnLabel'));
       $(this._handle).find('div.choice2-item').click($.proxy(this, '_handleClickOnItem'));
      },
@@ -230,17 +230,17 @@
          var t = $(e.target),
              h = $(e.target).closest('.axel-choice2'),
              n, pos, height, val;
-         if (t.hasClass('select2-choices') || t.hasClass('select2-label')) { // open/close popup
-           pos = t.hasClass('select2-label') ? t.closest('.select2-choices').offset() : t.offset();
-           height = t.hasClass('select2-label') ? t.closest('.select2-choices').height() : t.height();
+         if (t.hasClass('select2old34-old34choices') || t.hasClass('select2old34-old34label')) { // open/close popup
+           pos = t.hasClass('select2old34-old34label') ? t.closest('.select2old34-old34choices').offset() : t.offset();
+           height = t.hasClass('select2old34-old34label') ? t.closest('.select2old34-old34choices').height() : t.height();
            n = h.children('ul.choice2-popup1');
            if (n.hasClass('show')) { // will be closed
-             $('div.select2-container-multi ul', this._handle).css('minHeight', ''); // unlock height
+             $('div.select2old34-old34container-multi ul', this._handle).css('minHeight', ''); // unlock height
            }
            n.toggleClass('show').offset( { top : pos.top + height + 1, left: pos.left });
            // var totalHeight = h.children('ul.choice2-popup1').height();
            // h.children('ul.choice2-popup1').offset( { top : pos.top - totalHeight, left: pos.left })
-         } else if (t.hasClass('select2-search-choice-close')) { // remove single choice
+         } else if (t.hasClass('select2old34-search-choice-close')) { // remove single choice
            t = $(e.target).closest('li[data-code]').first();
            val = t.attr('data-code');
            n = h.find('ul.choice2-popup1 li.choice2-label[data-code="' + val +'"]').removeClass('selected');
@@ -305,33 +305,33 @@
          for (i = 0; i < values.length; i++) {
            if (values[i].length > 0) {
              label = set.filter('[data-code="' + values[i] + '"]').first().addClass('selected').text();
-             tmp += '<li class="select2-search-choice" data-code="' + values[i] + '"><div class="select2-label">' + label.replace(/&/g,'&amp;') + '</div><a class="select2-search-choice-close" tabindex="-1" onclick="return false;" href="#"></a></li>';
+             tmp += '<li class="select2old34-search-choice" data-code="' + values[i] + '"><div class="select2old34-label">' + label.replace(/&/g,'&amp;') + '</div><a class="select2old34-search-choice-close" tabindex="-1" onclick="return false;" href="#"></a></li>';
            }
          }
-         $('div.select2-container-multi > ul', this._handle).html(tmp);
+         $('div.select2old34-container-multi > ul', this._handle).html(tmp);
          $('li.choice2-option', this._handle).each ( function (i, e) { _fixItemSelection($(e)); } );
        },
 
        addToSelection : function (value, name) {
-         var sel = $('div.select2-container-multi > ul', this._handle);
-         if ((sel.find('li.select2-search-choice[data-code="' + value + '"]')).size() === 0) {
+         var sel = $('div.select2old34-container-multi > ul', this._handle);
+         if ((sel.find('li.select2old34-search-choice[data-code="' + value + '"]')).size() === 0) {
            sel.append(
-             '<li class="select2-search-choice" data-code="' + value + '"><div class="select2-label">' + name.replace(/&/g,'&amp;') + '</div><a class="select2-search-choice-close" tabindex="-1" onclick="return false;" href="#"></a></li>'
+             '<li class="select2old34-search-choice" data-code="' + value + '"><div class="select2old34-label">' + name.replace(/&/g,'&amp;') + '</div><a class="select2old34-search-choice-close" tabindex="-1" onclick="return false;" href="#"></a></li>'
              );
            if ('true' === this.getParam('choice2_closeOnSelect')) {
              $('ul.choice2-popup1', this._handle).removeClass('show');
            }
-           this.update($('li.select2-search-choice', this._handle).map( function(i, e) { return $(e).attr('data-code'); } ).get());
+           this.update($('li.select2old34-search-choice', this._handle).map( function(i, e) { return $(e).attr('data-code'); } ).get());
          }
        },
 
        removeFromSelection : function (value, checkParent) {
-         var n = $('div.select2-container-multi ul', this._handle);
+         var n = $('div.select2old34-container-multi ul', this._handle);
          if ($(this._handle).children('ul.choice2-popup1').hasClass('show')) {
            n.css('minHeight', n.height() + 'px'); // locks height to avoid "jump"
          }
-         $('div.select2-container-multi li[data-code="' + value + '"]', this._handle).remove();
-         this.update($('li.select2-search-choice', this._handle).map( function(i, e) { return $(e).attr('data-code'); } ).get());
+         $('div.select2old34-container-multi li[data-code="' + value + '"]', this._handle).remove();
+         this.update($('li.select2old34-search-choice', this._handle).map( function(i, e) { return $(e).attr('data-code'); } ).get());
          if (checkParent) {
            checkParent.closest('.choice2-option').removeClass('selected');
          }

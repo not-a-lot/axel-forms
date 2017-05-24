@@ -64,7 +64,7 @@
   function markMatch(text, term, markup, escapeMarkup, match) {
     var tl=term.length;
     markup.push(escapeMarkup(text.substring(0, match)));
-    markup.push("<span class='select2-match'>");
+    markup.push("<span class='select2old34-match'>");
     markup.push(escapeMarkup(text.substring(match, match + tl)));
     markup.push("</span>");
     markup.push(escapeMarkup(text.substring(match + tl, text.length)));
@@ -85,7 +85,7 @@
   function formatResult(state, container, query, escapeMarkup, openTag) {
     var text = (state && state.text) ? state.text : '',
         i = text.indexOf('::'),
-        oTag = openTag || ' - <span class="select2-complement">',
+        oTag = openTag || ' - <span class="select2old34-complement">',
         cTag = '</span>',
         qTerm = translate(query.term),
         match, markup;
@@ -217,14 +217,14 @@
         }
       }
       this._setData(defval);
-      $(this._handle).select2(params).change(
+      $(this._handle).select2old34(params).change(
         function (ev, data) {
          if (!(data && data.synthetic)) { // short circuit if forged event (onLoad)
            _this.update($(this).val()); // tells 'choice' instance to update its model
          }
         }
       );
-      $(this._handle).prev('.select2-container').get(0).xttNoShallowClone = true; // prevent cloning
+      $(this._handle).prev('.select2old34-container').get(0).xttNoShallowClone = true; // prevent cloning
     },
 
      // Triggers DOM 'change' event to tell model has changed to select2 implementation
@@ -242,12 +242,12 @@
        update : function (aData) {
          var _this = this;
          this.__select2__update(aData);
-         setTimeout(function() { $(_this._handle).select2('focus'); }, 50);
+         setTimeout(function() { $(_this._handle).select2old34('focus'); }, 50);
          // keeps focus to be able to continue tabbing after drop list closing
        },
 
        focus : function () {
-         $(this._handle).select2('focus');
+         $(this._handle).select2old34('focus');
        }
      },
      
