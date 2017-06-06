@@ -471,14 +471,6 @@
         isFocusable: function () {
           return true;
         },
-
-        // Request to take focus (from tab navigation manager)
-        focus: function () {
-        },
-
-        // Request to leave focus (from tab navigation manager)
-        unfocus: function () {
-        },
       },
 
       /////////////////////////////
